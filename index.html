@@ -1,0 +1,2671 @@
+<title>Dispatcher Dashboard</title>
+<style>
+  :root {
+    --bg-page: #f5f6f7;
+    --bg-surface: #ffffff;
+    --text-strong: #1d2d3e;
+    --text-secondary: #556b82;
+    --text-muted: #788fa6;
+    --border-default: #d9d9d9;
+    --border-row: #eaecee;
+    --border-control: #bcc3ca;
+    --accent: #0064d9;
+    --accent-weak: #eaecee;
+    --accent-wash: #e8f1fc;
+    --warning: #b5590a;
+    --warning-weak: #fdf1e4;
+    --success: #0a7d3a;
+    --success-weak: #e8f7ee;
+    --success-soft: #8fc9a6;
+    --accent-soft: #93b8e8;
+    --capacity-actual: #6d97cf;
+    --capacity-planned: #c3d6ef;
+    --danger: #c22b2b;
+    --danger-weak: #fbe9e9;
+    --focus-ring: #0064d9;
+    --shadow-color: 34, 53, 72;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    overflow-x: hidden;
+  }
+  body {
+    margin: 0;
+    background: var(--bg-page);
+    color: var(--text-strong);
+    font-family: "Segoe UI", Arial, "Helvetica Neue", sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  button, input, select {
+    font-family: inherit;
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 1px;
+  }
+
+  img.icon, svg.icon { display: block; }
+
+  /* ---------- App header ---------- */
+  .app-header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+    box-shadow: 0 2px 1px rgba(var(--shadow-color), 0.05);
+  }
+
+  .app-header__bar {
+    display: flex;
+    align-items: center;
+    height: 56px;
+    padding: 0 48px;
+    gap: 16px;
+  }
+
+  .app-header__title {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+  }
+
+  .app-header__actions {
+    display: flex;
+    gap: 8px;
+    margin-left: auto;
+  }
+
+  .app-header__action-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-control);
+    border-radius: 8px;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .app-header__action-button:hover { background: #f7f8f9; }
+
+  .app-header__nav {
+    display: flex;
+    gap: 32px;
+    height: 44px;
+    padding: 0 48px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+  }
+
+  .app-header__tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    background: none;
+    border: none;
+    color: var(--text-strong);
+    font-size: 14px;
+    cursor: pointer;
+  }
+
+  .app-header__tab--active { color: var(--accent); font-weight: 700; }
+
+  .app-header__tab--active::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px 2px 0 0;
+  }
+
+  /* ---------- Page header ---------- */
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 48px;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+    flex-wrap: wrap;
+    gap: 10px;
+    position: relative;
+  }
+
+  .page-header__title {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  .page-header__filters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .filter-field { display: flex; align-items: center; gap: 6px; position: relative; }
+  .filter-field__label { font-size: 12px; color: var(--text-secondary); }
+  .filter-field__divider { width: 1px; height: 16px; background: var(--border-default); }
+
+  .filter-field__control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-control);
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-strong);
+    cursor: pointer;
+  }
+
+  .filter-field__control input {
+    border: none;
+    outline: none;
+    font-size: 12px;
+    color: var(--text-strong);
+    width: 92px;
+    background: transparent;
+  }
+
+  /* Date field: exactly one visible calendar icon (ours). The native browser
+     indicator is stretched invisibly over the whole field so a click anywhere
+     still opens the picker, instead of showing a second icon on the right. */
+  .date-field { position: relative; }
+  .date-field input[type="date"] {
+    position: relative;
+    z-index: 1;
+    cursor: pointer;
+  }
+  .date-field input[type="date"]::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  /* ---------- Workspace layout ---------- */
+  .workspace {
+    display: flex;
+    align-items: flex-start;
+    width: 100%;
+  }
+
+  .workspace__main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .assignment-panel {
+    width: 0;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border-default);
+    transition: width 0.18s ease;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 149px);
+    position: sticky;
+    top: 0;
+  }
+
+  .assignment-panel--open { width: 360px; }
+
+  #assignment-panel-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+  }
+
+  .assignment-panel__scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .assignment-panel__empty {
+    padding: 32px 16px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .panel-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .panel-close:hover { background: var(--bg-page); }
+
+  .panel-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 14px 16px;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--border-row);
+  }
+
+  .panel-head__name { margin: 0; font-size: 16px; font-weight: 700; }
+  .panel-head__sub { margin: 2px 0 0; font-size: 12px; color: var(--text-secondary); }
+
+  .panel-mode-banner {
+    margin: 0 16px;
+    padding: 6px 10px;
+    background: var(--accent-wash);
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .util-block {
+    border: 1px solid var(--border-row);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .util-block + .util-block { margin-top: 8px; }
+
+  .util-block__label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+  }
+
+  .util-block__row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .util-block__track {
+    flex: 1;
+    height: 8px;
+    background: var(--accent-weak);
+    border-radius: 9999px;
+    overflow: hidden;
+  }
+
+  .util-block__fill {
+    height: 8px;
+    background: var(--accent);
+    border-radius: 9999px;
+  }
+
+  .util-block__fill--warning { background: var(--warning); }
+
+  .util-block__value {
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--accent);
+    min-width: 34px;
+    text-align: right;
+  }
+
+  .util-block__value--warning { color: var(--warning); }
+
+  .util-block__sub {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .work-today {
+    border: 1px solid var(--border-row);
+    border-radius: 8px;
+    padding: 10px 12px;
+  }
+
+  .work-today__title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+  }
+
+  .capacity-bar-outer { position: relative; }
+  .capacity-bar {
+    display: flex;
+    height: 10px;
+    border-radius: 9999px;
+    background: var(--bg-page);
+    overflow: hidden;
+  }
+  .capacity-bar__seg { height: 100%; flex-shrink: 0; }
+  .capacity-bar__seg--actual { background: var(--capacity-actual); }
+  .capacity-bar__seg--planned { background: var(--capacity-planned); }
+  .capacity-bar__seg--projected {
+    background-image: repeating-linear-gradient(135deg, var(--capacity-actual) 0 3px, var(--capacity-planned) 3px 6px);
+  }
+  .capacity-bar__seg--over { background: var(--warning); }
+  .capacity-bar__tick {
+    position: absolute;
+    top: -2px;
+    bottom: -2px;
+    width: 1px;
+    background: var(--border-control);
+  }
+  .capacity-bar__tick-label {
+    position: absolute;
+    top: 100%;
+    right: -2px;
+    margin-top: 2px;
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+  }
+
+  .capacity-caption {
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  .capacity-warning {
+    margin-top: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--warning);
+  }
+
+  /* Fixed-width so the bar never shifts between table rows regardless of label length.
+     block (not inline-flex) so it hugs the cell's left edge instead of centering as an
+     inline box; bar width is widened to roughly track the caption text beneath it. */
+  .worktoday-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; width: 148px; }
+  .capacity-bar--compact { width: 148px; height: 6px; }
+  .worktoday-cell__caption { font-size: 10.5px; color: var(--text-secondary); white-space: nowrap; }
+
+  .util-connector {
+    display: flex;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    margin: 2px 0;
+  }
+
+  .mini-fields {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mini-field {
+    flex: 1;
+    border: 1px solid var(--border-row);
+    border-radius: 8px;
+    padding: 8px 10px;
+  }
+
+  .mini-field__label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .mini-field__value { font-size: 13px; font-weight: 700; margin-top: 2px; }
+
+  .assigned-section__title {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin: 0 0 8px;
+  }
+
+  .work-item {
+    position: relative;
+    border: 1px solid var(--border-row);
+    border-radius: 8px;
+    padding: 8px 10px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 6px;
+  }
+
+  .work-item + .work-item { margin-top: 6px; }
+
+  .work-item--executed { background: var(--bg-page); }
+  .work-item--executed .work-item__container { color: var(--text-secondary); }
+  .work-item--executed .work-item__route,
+  .work-item--executed .work-item__meta { color: var(--text-muted); }
+
+  .work-item__container { font-weight: 700; font-size: 12.5px; color: var(--text-strong); display: block; }
+  .work-item__route { font-size: 11.5px; color: var(--text-secondary); display: block; margin-top: 2px; }
+  .work-item__meta { font-size: 11px; color: var(--text-muted); margin-top: 3px; display: flex; align-items: center; gap: 6px; }
+
+  /* One shared Object Status pill family — used for Priority, Assignment Status
+     and every Assigned Work status tag. Only the semantic modifier changes. */
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 18px;
+    padding: 0 7px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .status-pill--neutral { background: var(--bg-page); color: var(--text-secondary); }
+  .status-pill--positive { background: var(--success-weak); color: var(--success); }
+  .status-pill--positive-subdued { background: var(--bg-page); color: var(--success); }
+  .status-pill--info { background: var(--accent-wash); color: var(--accent); }
+  .status-pill--warning { background: var(--warning-weak); color: var(--warning); }
+  .status-pill--negative { background: var(--danger-weak); color: var(--danger); }
+
+  .status-info-icon {
+    display: inline-flex;
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text-muted);
+    font-size: 12px;
+    cursor: help;
+    line-height: 1;
+  }
+
+  .link-button-inline {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  .menu-button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    line-height: 1;
+  }
+  .menu-button:hover { background: var(--bg-page); }
+
+  .dropdown-menu {
+    position: absolute;
+    top: 28px;
+    right: 0;
+    z-index: 40;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-control);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(var(--shadow-color), 0.18);
+    min-width: 190px;
+    padding: 6px;
+  }
+
+  .dropdown-menu__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    text-align: left;
+    padding: 7px 8px;
+    background: none;
+    border: none;
+    border-radius: 6px;
+    font-size: 12.5px;
+    color: var(--text-strong);
+    cursor: pointer;
+  }
+  .dropdown-menu__item:hover { background: var(--bg-page); }
+  .dropdown-menu__item[disabled] { color: var(--text-muted); cursor: not-allowed; }
+  .dropdown-menu__item[disabled]:hover { background: none; }
+
+  .dropdown-menu__label {
+    padding: 6px 8px 2px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .dropdown-menu__divider { height: 1px; background: var(--border-row); margin: 4px 2px; }
+
+  .dropdown-submenu {
+    position: relative;
+  }
+  .dropdown-submenu__panel {
+    position: absolute;
+    right: 100%;
+    left: auto;
+    top: -6px;
+    z-index: 41;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-control);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(var(--shadow-color), 0.18);
+    min-width: 160px;
+    padding: 6px;
+    display: none;
+  }
+  .dropdown-submenu--open .dropdown-submenu__panel { display: block; }
+
+  .reassign-picker { display: flex; flex-direction: column; gap: 6px; }
+  .reassign-picker__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border: 1px solid var(--border-row);
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    font-size: 12.5px;
+  }
+  .reassign-picker__option:hover { border-color: var(--border-control); }
+  .reassign-picker__option--selected { border-color: var(--accent); background: var(--accent-wash); }
+  .reassign-picker__util { font-size: 11px; color: var(--text-secondary); }
+
+  .panel-footer {
+    border-top: 1px solid var(--border-row);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    background: var(--bg-surface);
+    flex-shrink: 0;
+  }
+
+  .panel-footer__count { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-primary:hover { background: #0053b3; }
+  .btn-primary[disabled] { background: var(--border-control); cursor: not-allowed; }
+
+  .btn-secondary {
+    background: var(--bg-surface);
+    color: var(--text-strong);
+    border: 1px solid var(--border-control);
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .btn-row { display: flex; gap: 8px; justify-content: flex-end; }
+
+  /* ---------- Content ---------- */
+  .panel {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+    min-width: 0;
+  }
+
+  .panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 48px;
+    border-bottom: 1px solid var(--border-row);
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .panel__title { margin: 0; font-size: 15px; font-weight: 700; }
+  .panel__title-sub { font-size: 12px; font-weight: 400; color: var(--accent); margin-left: 6px; }
+
+  .panel__tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: relative; }
+
+  .toggle-group { display: flex; gap: 2px; padding: 2px; background: var(--bg-page); border: 1px solid var(--border-control); border-radius: 8px; }
+  .toggle-group__button { padding: 5px 12px; background: none; border: none; border-radius: 6px; font-size: 13px; color: var(--accent); cursor: pointer; display: flex; align-items: baseline; gap: 5px; }
+  .toggle-group__button--active { background: var(--bg-surface); box-shadow: 0 1px 1.5px rgba(var(--shadow-color), 0.12); font-weight: 700; color: var(--text-strong); }
+  .toggle-group__button-sub { font-size: 10.5px; font-weight: 400; color: var(--text-muted); }
+
+  .search-field { position: relative; display: flex; align-items: center; }
+  .search-field .icon { position: absolute; left: 9px; width: 14px; height: 14px; }
+  .search-field input { width: 200px; height: 30px; padding: 4px 10px 4px 30px; border: 1px solid var(--border-control); border-radius: 8px; font-size: 13px; color: var(--text-strong); }
+  .search-field input::placeholder { color: var(--text-muted); }
+
+  .icon-button {
+    display: flex; align-items: center; gap: 6px; height: 30px; padding: 4px 10px;
+    background: var(--bg-surface); border: 1px solid var(--border-control); border-radius: 8px;
+    font-size: 12px; color: var(--text-secondary); cursor: pointer; position: relative;
+  }
+  .icon-button__badge {
+    background: var(--accent); color: #fff; border-radius: 9999px; font-size: 10px; font-weight: 700;
+    padding: 0 5px; line-height: 15px;
+  }
+
+  .icon-button--icon-only {
+    width: 30px;
+    padding: 0;
+    justify-content: center;
+  }
+  .icon-button--icon-only:hover { background: var(--bg-page); color: var(--text-strong); }
+
+  .popover {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    z-index: 30;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-control);
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(var(--shadow-color), 0.18);
+    width: 260px;
+    max-height: 340px;
+    overflow-y: auto;
+    padding: 10px;
+  }
+  .popover--columns { max-height: 440px; }
+  .popover__search {
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 8px;
+    border: 1px solid var(--border-control);
+    border-radius: 6px;
+    font-size: 12.5px;
+  }
+  .popover__row--draggable { cursor: grab; }
+  .popover__row--draggable:active { cursor: grabbing; }
+  .drag-handle { color: var(--text-muted); font-size: 13px; flex-shrink: 0; }
+
+  .popover__title { font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-muted); margin: 4px 0 6px; }
+  .popover__row { display: flex; align-items: center; gap: 8px; padding: 5px 2px; font-size: 12.5px; }
+  .popover__row label { display: flex; align-items: center; gap: 8px; cursor: pointer; width: 100%; }
+
+  /* ---------- Tables ---------- */
+  .table-scroll { overflow-x: auto; max-width: 100%; }
+  /* table-layout:auto + width:auto lets the table grow past 100% to fit its
+     content (columns never shrink/wrap when more are added) while min-width
+     keeps it filling the viewport when content is narrower than that. */
+  table { width: auto; min-width: 100%; table-layout: auto; border-collapse: collapse; }
+
+  thead th { background: var(--bg-page); border-bottom: 1px solid var(--border-row); padding: 0 10px 0 12px; height: 34px; text-align: left; white-space: nowrap; }
+
+  .th-sort { display: inline-flex; align-items: center; gap: 6px; background: none; border: none; padding: 0; cursor: pointer; font-weight: 700; font-size: 11.5px; color: var(--text-secondary); white-space: nowrap; }
+  .th-sort .icon { width: 12px; height: 12px; }
+
+  tbody td { padding: 8px 10px 8px 12px; border-bottom: 1px solid var(--border-row); font-size: 13px; color: var(--text-strong); vertical-align: middle; white-space: nowrap; }
+  tbody tr { cursor: default; }
+  tbody tr:hover td { background: #fafbfc; }
+  tbody tr.row--selected td { background: var(--accent-wash); }
+  tbody tr.row--clickable { cursor: pointer; }
+  tbody tr.row--active td { background: var(--accent-wash); }
+  tbody tr.row--active td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
+  /* 36px gutter + the 12px cell padding on the next column = 48px, matching the
+     page/panel header's 48px inset, so FRO/BOOKING and DRIVER line up with the
+     titles above them. */
+  .checkbox-cell { width: 36px; text-align: center; position: sticky; left: 0; z-index: 2; }
+  thead .checkbox-cell { background: var(--bg-page); z-index: 3; }
+  tbody .checkbox-cell { background: var(--bg-surface); }
+  tbody tr:hover .checkbox-cell { background: #fafbfc; }
+  tr.row--selected .checkbox-cell,
+  tr.row--active .checkbox-cell { background: var(--accent-wash); }
+
+  .two-line { display: flex; flex-direction: column; }
+  .two-line__primary { font-weight: 700; font-size: 12.5px; }
+  .two-line__secondary { font-size: 10.5px; color: var(--text-muted); margin-top: 1px; }
+  .two-line__caption { font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 1px; }
+  .two-line__primary--link { color: var(--accent); }
+  .two-line__primary--plain { font-weight: 400; font-size: 13px; color: var(--text-strong); }
+
+  .cell-strong { font-weight: 700; font-size: 12px; color: var(--text-secondary); }
+  .cell-muted { font-size: 12px; color: var(--text-secondary); }
+  .cell-faint { font-size: 12px; color: var(--text-muted); }
+
+  td.align-right, th.align-right { text-align: right; }
+  td.align-center, th.align-center { text-align: center; }
+  td.align-right .two-line { align-items: flex-end; }
+  td.align-right .utilization { justify-content: flex-end; }
+
+  .rejected-note { display: block; margin-top: 3px; font-size: 10.5px; color: var(--danger); font-weight: 600; }
+
+  .driver-name { font-weight: 700; font-size: 13px; }
+
+  .utilization { display: flex; align-items: center; gap: 8px; }
+  .utilization-track { width: 56px; height: 6px; background: var(--accent-weak); border-radius: 9999px; overflow: hidden; flex-shrink: 0; }
+  .utilization-fill { height: 6px; background: var(--accent); border-radius: 9999px; }
+  .utilization-fill--warning { background: var(--warning); }
+  .utilization-value { font-weight: 700; font-size: 12px; color: var(--accent); }
+  .utilization-value--warning { color: var(--warning); }
+
+  .empty-state { padding: 48px; text-align: center; color: var(--text-secondary); font-size: 14px; }
+
+  /* Lightweight inline notes: neutral (informational) and warning (needs review) variants,
+     reused for the "no shared location" note and the disconnected-sequence warning. */
+  .inline-note { margin: 0 16px 10px; padding: 8px 12px; border-radius: 8px; font-size: 12px; line-height: 1.4; }
+  .inline-note--neutral { background: var(--bg-page); color: var(--text-secondary); border: 1px solid var(--border-row); }
+  .inline-note--warning { background: var(--warning-weak); color: var(--warning); border: 1px solid var(--warning-weak); font-weight: 600; }
+
+  .fallout-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 48px;
+    background: var(--warning-weak);
+    border-bottom: 1px solid var(--border-default);
+    font-size: 12.5px;
+    color: var(--warning);
+    font-weight: 600;
+  }
+  .fallout-panel {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-default);
+    padding: 12px 48px;
+  }
+  .fallout-panel__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .fallout-panel__title { margin: 0; font-size: 12px; font-weight: 700; color: var(--text-secondary); }
+  .fallout-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-row);
+    font-size: 12.5px;
+  }
+  .fallout-row:last-child { border-bottom: none; }
+  .fallout-row__main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+  .fallout-row__container { font-weight: 700; color: var(--text-strong); }
+  .fallout-row__meta { color: var(--text-secondary); }
+  .fallout-row__actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .fallout-panel__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-row);
+  }
+
+  .scope-filters-overlay {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: 340px;
+    max-width: 90vw;
+    background: var(--bg-surface);
+    box-shadow: -8px 0 24px rgba(var(--shadow-color), 0.18);
+    z-index: 80;
+    transform: translateX(100%);
+    transition: transform 0.18s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .scope-filters-overlay--open { transform: translateX(0); }
+  .scope-panel { position: relative; display: flex; flex-direction: column; height: 100%; }
+  .scope-panel__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-row);
+  }
+  .scope-panel__title { margin: 0; font-size: 15px; font-weight: 700; }
+  .scope-panel__header-actions { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+  .scope-panel__body { flex: 1; overflow-y: auto; padding: 16px; }
+  .scope-section + .scope-section { margin-top: 18px; }
+  .scope-section__title { margin: 0 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; color: var(--text-muted); }
+  .empty-row td { padding: 24px; text-align: center; color: var(--text-secondary); font-size: 13px; }
+
+  .tab-panel { display: none; }
+  .tab-panel--active { display: block; }
+
+  /* ---------- Toast ---------- */
+  #toast-host {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+  .toast {
+    background: var(--text-strong);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    animation: toast-in 0.15s ease-out;
+  }
+  @keyframes toast-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="app-header">
+  <div class="app-header__bar">
+    <p class="app-header__title">Dispatcher Dashboard</p>
+    <div class="app-header__actions">
+      <button type="button" class="app-header__action-button">
+        <svg class="icon" width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M13.2 16H0.799999C0.359999 16 0 15.64 0 15.2C0 14.76 0.359999 14.4 0.799999 14.4H13.2C13.64 14.4 14 14.76 14 15.2C14 15.64 13.64 16 13.2 16ZM7 12C6.56 12 6.2 11.64 6.2 11.2V2.73L3.97 4.96C3.66 5.27 3.15 5.27 2.84 4.96C2.53 4.65 2.53 4.14 2.84 3.83L6.43 0.24C6.58 0.09 6.8 0 7 0C7.23 0 7.42 0.09 7.57 0.24L11.17 3.84C11.48 4.15 11.48 4.66 11.17 4.97C10.86 5.28 10.35 5.28 10.04 4.97L7.81 2.74V11.21C7.81 11.65 7.45 12.01 7.01 12.01L7 12Z" fill="currentColor"/></svg>
+        Upload
+      </button>
+      <button type="button" class="app-header__action-button">
+        <svg class="icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 0C3.59 0 0 3.59 0 8C0 12.41 3.59 16 8 16C12.41 16 16 12.41 16 8C16 3.59 12.41 0 8 0ZM7.2 14.34C4.05 13.95 1.6 11.25 1.6 8C1.6 7.53 1.65 7.08 1.75 6.64L5.22 10.34C5.29 10.96 5.57 11.53 6.02 11.99C6.36 12.32 6.76 12.56 7.2 12.69V14.35V14.34ZM12.55 12.49C12.13 11.61 11.24 11 10.2 11H10V8.8C10 8.36 9.64 8 9.2 8H6.57L4.9 6H6.19C6.63 6 6.99 5.64 6.99 5.2V4H9.19C9.63 4 9.99 3.64 9.99 3.2V1.92C12.54 2.76 14.39 5.16 14.39 7.99C14.39 9.74 13.68 11.33 12.54 12.48L12.55 12.49Z" fill="currentColor"/></svg>
+        Global Filters
+      </button>
+    </div>
+  </div>
+  <nav class="app-header__nav" aria-label="Dispatcher Dashboard sections">
+    <button type="button" class="app-header__tab" data-tab="pending-tasks">Pending Tasks</button>
+    <button type="button" class="app-header__tab app-header__tab--active" data-tab="driver-assignment" aria-current="page">Driver Assignment</button>
+    <button type="button" class="app-header__tab" data-tab="free-search">Free Search</button>
+  </nav>
+</div>
+
+<div class="content">
+  <section class="tab-panel" data-panel="pending-tasks">
+    <div class="empty-state">Pending Tasks — not part of this preview.</div>
+  </section>
+
+  <section class="tab-panel tab-panel--active" data-panel="driver-assignment">
+    <div class="page-header">
+      <p class="page-header__title">Driver Assignment</p>
+      <div class="page-header__filters">
+        <div class="filter-field">
+          <div class="toggle-group" id="day-toggle" role="group" aria-label="Planning day">
+            <button type="button" class="toggle-group__button toggle-group__button--active" data-day="today">Today<span class="toggle-group__button-sub">14 Aug</span></button>
+            <button type="button" class="toggle-group__button" data-day="tomorrow">Tomorrow<span class="toggle-group__button-sub">15 Aug</span></button>
+          </div>
+        </div>
+        <div class="filter-field__divider"></div>
+        <div class="filter-field">
+          <button type="button" class="icon-button" id="scope-filters-btn">
+            <svg class="icon" width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1 2h14l-5.5 6.5V13l-3 2V8.5L1 2z" stroke="var(--text-secondary)" stroke-width="1.3" stroke-linejoin="round"/></svg>
+            Scope Filters
+            <span class="icon-button__badge" id="scope-filters-badge" style="display:none">0</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="fallout-banner"></div>
+    <div id="scope-filters-overlay" class="scope-filters-overlay"></div>
+
+    <div class="workspace">
+      <div class="workspace__main">
+        <section class="panel" id="fro-panel">
+          <div class="panel__header">
+            <p class="panel__title" id="fro-title">Freight Orders for Assignment (6)</p>
+            <div class="panel__tools">
+              <div class="search-field">
+                <svg class="icon" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.125 10.5C8.54125 10.5 10.5 8.54125 10.5 6.125C10.5 3.70875 8.54125 1.75 6.125 1.75C3.70875 1.75 1.75 3.70875 1.75 6.125C1.75 8.54125 3.70875 10.5 6.125 10.5Z" stroke="var(--text-muted)" stroke-width="1.3125"/><path d="M9.625 9.625L12.25 12.25" stroke="var(--text-muted)" stroke-width="1.3125" stroke-linecap="round"/></svg>
+                <input type="text" id="fro-search" placeholder="Search FRO, booking or container" />
+              </div>
+              <div id="fro-hold-slot"></div>
+              <div id="fro-third-party-slot"></div>
+              <button type="button" class="icon-button" id="fro-filters-btn">
+                Filters
+                <span class="icon-button__badge" id="fro-filters-badge" style="display:none">0</span>
+                <svg class="icon" width="8" height="4.8" viewBox="0 0 8 4.79688" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.00155 4.79688C3.82571 4.79688 3.65787 4.72495 3.53798 4.59706L0.181069 1.0803C-0.0667022 0.824537 -0.050718 0.416914 0.205047 0.177135C0.460811 -0.0706376 0.868435 -0.0546522 1.10821 0.201112L4.00155 3.23032L6.89489 0.201112C7.14266 -0.0546522 7.54229 -0.062645 7.79806 0.177135C8.0538 0.424906 8.0618 0.824537 7.82203 1.0803L4.46512 4.59706C4.34523 4.72495 4.17739 4.79688 4.00155 4.79688Z" fill="var(--text-secondary)"/></svg>
+              </button>
+              <div id="fro-filters-popover"></div>
+              <button type="button" class="icon-button icon-button--icon-only" id="fro-settings-btn" title="Table Settings" aria-label="Table Settings">
+                <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              </button>
+              <div id="fro-settings-popover"></div>
+            </div>
+          </div>
+          <div id="fro-selection-note"></div>
+          <div class="table-scroll">
+            <table id="fro-table">
+              <thead><tr id="fro-head-row"></tr></thead>
+              <tbody id="fro-body"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel" id="drivers-panel">
+          <div class="panel__header">
+            <p class="panel__title" id="drivers-title">Drivers (9)</p>
+            <div class="panel__tools">
+              <div class="toggle-group">
+                <button type="button" class="toggle-group__button" data-driver-filter="recommended">Recommended</button>
+                <button type="button" class="toggle-group__button toggle-group__button--active" data-driver-filter="all">All Drivers</button>
+              </div>
+              <div class="search-field">
+                <svg class="icon" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.125 10.5C8.54125 10.5 10.5 8.54125 10.5 6.125C10.5 3.70875 8.54125 1.75 6.125 1.75C3.70875 1.75 1.75 3.70875 1.75 6.125C1.75 8.54125 3.70875 10.5 6.125 10.5Z" stroke="var(--text-muted)" stroke-width="1.3125"/><path d="M9.625 9.625L12.25 12.25" stroke="var(--text-muted)" stroke-width="1.3125" stroke-linecap="round"/></svg>
+                <input type="text" id="drivers-search" placeholder="Search name, ID, TenStreet or truck" />
+              </div>
+              <button type="button" class="icon-button" id="drivers-filters-btn">
+                Filters
+                <span class="icon-button__badge" id="drivers-filters-badge" style="display:none">0</span>
+                <svg class="icon" width="8" height="4.8" viewBox="0 0 8 4.79688" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.00155 4.79688C3.82571 4.79688 3.65787 4.72495 3.53798 4.59706L0.181069 1.0803C-0.0667022 0.824537 -0.050718 0.416914 0.205047 0.177135C0.460811 -0.0706376 0.868435 -0.0546522 1.10821 0.201112L4.00155 3.23032L6.89489 0.201112C7.14266 -0.0546522 7.54229 -0.062645 7.79806 0.177135C8.0538 0.424906 8.0618 0.824537 7.82203 1.0803L4.46512 4.59706C4.34523 4.72495 4.17739 4.79688 4.00155 4.79688Z" fill="var(--text-secondary)"/></svg>
+              </button>
+              <div id="drivers-filters-popover"></div>
+              <button type="button" class="icon-button icon-button--icon-only" id="drivers-settings-btn" title="Table Settings" aria-label="Table Settings">
+                <svg class="icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+              </button>
+              <div id="drivers-settings-popover"></div>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table id="drivers-table">
+              <thead><tr id="drivers-head-row"></tr></thead>
+              <tbody id="drivers-body"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <aside class="assignment-panel" id="assignment-panel">
+        <div id="assignment-panel-content"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="tab-panel" data-panel="free-search">
+    <div class="empty-state">Free Search — not part of this preview.</div>
+  </section>
+</div>
+
+<div id="toast-host"></div>
+
+<script>
+/* ============================================================
+   ICONS
+   ============================================================ */
+const ICON_SORT = '<svg class="icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.5 7.9998L8.5 9.9996L10.5 7.9998M8.5 9.9996V2.0004M5.5 4.0002L3.5 2.0004L1.5 4.0002M3.5 2.0004V9.9996" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round"/></svg>';
+const ICON_UP = '<svg class="icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9.5004 6L6 2.4996L2.4996 6M6 2.4996V9.5004" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>';
+const ICON_DOWN = '<svg class="icon" width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 2.4996V9.5004M2.4996 6L6 9.5004L9.5004 6" stroke="var(--accent)" stroke-width="2" stroke-linecap="round"/></svg>';
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function hashStr(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0;
+  return Math.abs(h);
+}
+function pick(seed, arr) { return arr[hashStr(String(seed)) % arr.length]; }
+function twoLine(primary, secondary, opts) {
+  opts = opts || {};
+  const primaryClass = "two-line__primary" + (opts.link ? " two-line__primary--link" : "");
+  return `<div class="two-line"><span class="${primaryClass}">${primary}</span>${secondary ? `<span class="two-line__secondary">${secondary}</span>` : ""}</div>`;
+}
+function addMinutes(hhmm, mins) {
+  const [h, m] = hhmm.split(":").map(Number);
+  const total = h * 60 + m + mins;
+  const nh = Math.floor(((total % 1440) + 1440) % 1440 / 60);
+  const nm = ((total % 60) + 60) % 60;
+  return String(nh).padStart(2, "0") + ":" + String(nm).padStart(2, "0");
+}
+function uid(prefix) { return prefix + "-" + Math.random().toString(36).slice(2, 9); }
+function toast(message) {
+  const host = document.getElementById("toast-host");
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = message;
+  host.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+function closeAllPopovers(except) {
+  document.querySelectorAll(".popover, .dropdown-menu").forEach((el) => {
+    if (el !== except) el.remove();
+  });
+}
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".popover") && !e.target.closest(".dropdown-menu") &&
+      !e.target.closest("[data-opens-popover]") && !e.target.closest(".menu-button")) {
+    closeAllPopovers();
+  }
+});
+
+/* ============================================================
+   REFERENCE DATA
+   ============================================================ */
+const LOCATIONS = {
+  "CSX 59th Street": { code: "USCSX59", name: "CSX 59th Street" },
+  "Chicago Terminal": { code: "USORDCT", name: "Chicago Terminal" },
+  "Port of Chicago": { code: "USCHIPOC", name: "Port of Chicago" },
+  "Joliet DC": { code: "USJOLDC", name: "Joliet DC" },
+  "Gary, IN": { code: "USGARIN", name: "Gary, IN" },
+  "Indianapolis, IN": { code: "USINDIN", name: "Indianapolis, IN" },
+  "Hammond, IN": { code: "USHAMIN", name: "Hammond, IN" },
+  "Elgin, IL": { code: "USELGIL", name: "Elgin, IL" },
+};
+const SIZE_LABELS = { "40HC": "40' High cube", "20GP": "20' General purpose", "40GP": "40' General purpose", "45HC": "45' High cube" };
+const PORT_TERMINAL_OPTIONS = ["All Chicago locations", "Chicago Terminal", "CSX 59th Street", "Joliet DC", "Port of Chicago"];
+
+/* ============================================================
+   MOCK DATA — FREIGHT ORDERS
+   ============================================================ */
+const FROS = [
+  { id: "fro-6100420", froNumber: "FRO 6100420", bookingNumber: "ZBKNG23454512", containerNumber: "MSCU1234561", sizeType: "40HC", customer: "Adidas", customerId: "CUST-10045", load: ["FCL"], source: "CSX 59th Street", destination: "Joliet DC", appointmentTime: "11:00", appointmentEndTime: "13:00", appointmentDate: "14 Aug 2026", demurrage: { time: "17:00", date: "14 Aug 2026" }, detention: { time: "17:00", date: "16 Aug 2026" }, priority: "priority" },
+  { id: "fro-6100421", froNumber: "FRO 6100421", bookingNumber: "ZBKNG23454598", containerNumber: "TCKU8901232", sizeType: "20GP", customer: "Adidas", customerId: "CUST-10045", load: ["FCL"], source: "CSX 59th Street", destination: "Chicago Terminal", appointmentTime: "13:30", appointmentEndTime: "15:30", appointmentDate: "15 Aug 2026", demurrage: { time: "17:00", date: "15 Aug 2026" }, detention: { time: "17:00", date: "17 Aug 2026" }, priority: "normal" },
+  { id: "fro-6100422", froNumber: "FRO 6100422", bookingNumber: "ZBKNG23454633", containerNumber: "EVGU3456783", sizeType: "40GP", customer: "Maersk", customerId: "CUST-10012", load: ["FCL"], source: "Chicago Terminal", destination: "Port of Chicago", appointmentTime: "08:30", appointmentEndTime: "10:30", appointmentDate: "13 Aug 2026", demurrage: { time: "17:00", date: "13 Aug 2026" }, detention: null, priority: "priority" },
+  { id: "fro-6100423", froNumber: "FRO 6100423", bookingNumber: "ZBKNG23454701", containerNumber: "OOLU7890124", sizeType: "40HC", customer: "Nike", customerId: "CUST-10078", load: ["FCL"], source: "Port of Chicago", destination: "Gary, IN", appointmentTime: "10:00", appointmentEndTime: "12:00", appointmentDate: "16 Aug 2026", demurrage: { time: "17:00", date: "16 Aug 2026" }, detention: { time: "17:00", date: "18 Aug 2026" }, priority: "normal" },
+  { id: "fro-6100424", froNumber: "FRO 6100424", bookingNumber: "ZBKNG23454789", containerNumber: "HLCU2345675", sizeType: "45HC", customer: "H&M", customerId: "CUST-10091", load: ["FCL", "ECL"], source: "CSX 59th Street", destination: "Indianapolis, IN", appointmentTime: "14:00", appointmentEndTime: "16:00", appointmentDate: "14 Aug 2026", demurrage: { time: "17:00", date: "14 Aug 2026" }, detention: { time: "17:00", date: "16 Aug 2026" }, priority: "normal" },
+  { id: "fro-6100425", froNumber: "FRO 6100425", bookingNumber: "ZBKNG23454820", containerNumber: "ZIMU5678906", sizeType: "40HC", customer: "IKEA", customerId: "CUST-10033", load: ["ECL"], source: "Joliet DC", destination: "Chicago Terminal", appointmentTime: "15:30", appointmentEndTime: "17:30", appointmentDate: "15 Aug 2026", demurrage: { time: "17:00", date: "15 Aug 2026" }, detention: { time: "17:00", date: "17 Aug 2026" }, priority: "normal" },
+].map((f) => Object.assign(f, { status: "unassigned", assignedDriverId: null, rejectedBy: null, rejectionReason: null, onHold: false, holdReason: null }));
+
+// Prototype-only: pre-seed one rejected FRO so the "Rejected / by [driver]" state is visible on load.
+Object.assign(FROS.find((f) => f.id === "fro-6100421"), { rejectedBy: "James Carter", rejectedByDriverId: "25005", rejectionReason: "Truck issue" });
+
+const REJECTION_REASONS = ["Driver unavailable", "Truck issue", "Cannot meet appointment", "End of shift", "Other"];
+
+function froExtra(f, key) {
+  switch (key) {
+    case "froNumber": return f.froNumber;
+    case "bookingNumber": return f.bookingNumber;
+    case "containerNumber": return f.containerNumber;
+    case "containerSize": return twoLine(f.sizeType, SIZE_LABELS[f.sizeType]);
+    case "customer": return twoLine(f.customer, f.customerId);
+    case "source": return twoLine(LOCATIONS[f.source].code, LOCATIONS[f.source].name);
+    case "destination": return twoLine(LOCATIONS[f.destination].code, LOCATIONS[f.destination].name);
+    case "loadStage": return f.load.join(" + ") + " · " + pick(f.id + "stage", ["Gate in", "In yard", "Loaded", "Dispatched"]);
+    case "demurrageLfd": return f.demurrage ? twoLine(f.demurrage.time, f.demurrage.date) : '<span class="cell-faint">—</span>';
+    case "detentionLfd": return f.detention ? twoLine(f.detention.time, f.detention.date) : '<span class="cell-faint">—</span>';
+    case "portApptStart": return twoLine(f.appointmentTime, f.appointmentDate);
+    case "portApptEnd": return twoLine(f.appointmentEndTime, f.appointmentDate);
+    case "customerAppt": return twoLine(f.appointmentTime, f.appointmentDate);
+    case "pin": return "PIN-" + (1000 + (hashStr(f.id) % 9000));
+    case "cargoHandling": return pick(f.id + "cargo", ["Live Load", "Live Unload", "Drop & Hook", "—"]);
+    case "decoupling": return pick(f.id + "decouple", ["Laden Only", "Empty Only", "Pick Only", "Drop Only", "—"]);
+    case "load": return f.load.join(" + ");
+    case "chassis": return pick(f.id + "chassis", ["CH-1029", "CH-2044", "CH-3087"]);
+    case "vesselArrival": return pick(f.id + "va", ["10 Aug 2026", "11 Aug 2026", "12 Aug 2026"]);
+    case "vesselDeparture": return pick(f.id + "vd", ["12 Aug 2026", "13 Aug 2026", "14 Aug 2026"]);
+    case "peelPile": return twoLine(pick(f.id + "pp1", ["Peel #12", "Peel #7", "—"]), pick(f.id + "pp2", ["Active", "Closed", "—"]));
+    case "greyPool": return pick(f.id + "gp", ["Yes", "No"]);
+    case "edo": return "EDO-" + (40000 + (hashStr(f.id) % 9000));
+    case "rpn": return "RPN-" + (7000 + (hashStr(f.id) % 900));
+    case "containerAvailability": return twoLine(f.appointmentDate, pick(f.id + "avail", ["Available", "Pending"]));
+    case "siteCode": return LOCATIONS[f.source].code;
+    case "tripType": return pick(f.id + "trip", ["Import", "Export", "Repositioning"]);
+    case "billOfLading": return "BOL-" + (500000 + (hashStr(f.id) % 90000));
+    default: return "—";
+  }
+}
+
+/* Move — a derived display column over the separate Load / Cargo Handling /
+   Decoupling Service fields. Presentation-only; the underlying fields stay
+   independent and remain available via Table Settings. */
+function moveDisplay(f) {
+  const cargo = froExtra(f, "cargoHandling");
+  const decouple = froExtra(f, "decoupling");
+  const loadLabel = f.load.join(" + ");
+  if (cargo !== "—") {
+    const secondary = cargo === "Drop & Hook" && decouple !== "—" ? decouple : null;
+    return twoLine(loadLabel + " · " + cargo, secondary);
+  }
+  if (decouple !== "—") return twoLine(loadLabel + " · " + decouple);
+  return twoLine(loadLabel);
+}
+
+/* Relevant LFD — a derived display column that shows whichever LFD concept
+   actually applies to this FRO's move type, instead of two separate columns. */
+function relevantLfdInfo(f) {
+  const hasFCL = f.load.includes("FCL");
+  const hasECL = f.load.includes("ECL");
+  if (hasFCL && hasECL && f.demurrage && f.detention) return { mode: "both", dem: f.demurrage, det: f.detention };
+  if (hasECL && !hasFCL && f.detention) return { mode: "single", value: f.detention, label: "Detention" };
+  if (f.demurrage) return { mode: "single", value: f.demurrage, label: "Demurrage" };
+  if (f.detention) return { mode: "single", value: f.detention, label: "Detention" };
+  return { mode: "none" };
+}
+function relevantLfdDisplay(f) {
+  const info = relevantLfdInfo(f);
+  if (info.mode === "none") return '<span class="cell-faint">—</span>';
+  if (info.mode === "single") {
+    return `<div class="two-line"><span class="two-line__primary">${info.value.time}</span><span class="two-line__secondary">${info.value.date}</span><span class="two-line__caption">${info.label}</span></div>`;
+  }
+  return `<div class="two-line"><span class="two-line__secondary">${info.dem.date} · Demurrage</span><span class="two-line__secondary">${info.det.date} · Detention</span></div>`;
+}
+function relevantLfdSortValue(f) {
+  const info = relevantLfdInfo(f);
+  if (info.mode === "none") return "";
+  if (info.mode === "single") return info.value.date + info.value.time;
+  const a = info.dem.date + info.dem.time, b = info.det.date + info.det.time;
+  return a < b ? a : b;
+}
+
+function renderAssignmentStatusCell(f) {
+  if (f.onHold) {
+    return `<span class="status-pill status-pill--warning">On Hold</span> <button type="button" class="link-button-inline" data-release-hold="${f.id}" title="Reason: ${f.holdReason || "Not specified"}">Release Hold</button>`;
+  }
+  return f.rejectedBy
+    ? `<span class="status-pill status-pill--negative">Rejected</span> <button type="button" class="status-info-icon" data-rejected-info="${f.id}" title="Rejected by ${f.rejectedBy}" aria-label="Rejected by ${f.rejectedBy} — click for details">ⓘ</button>`
+    : '<span class="status-pill status-pill--neutral">Unassigned</span>';
+}
+
+/* Unified field registry — every FRO column (default or optional) is one entry
+   here, so Table Settings, sorting, and rendering all stay in sync automatically.
+   Column order/visibility lives in STATE.froColumnFullOrder / STATE.froVisibleKeys. */
+const FRO_FIELD_DEFS = {
+  froBooking: { label: "FRO / Booking", group: "default", render: (f) => twoLine(f.froNumber, f.bookingNumber), sortValue: (f) => f.froNumber },
+  containerSize: { label: "Container / Size", group: "default", render: (f) => twoLine(f.containerNumber, f.sizeType), sortValue: (f) => f.containerNumber },
+  customer: { label: "Customer", group: "default", render: (f) => f.customer, sortValue: (f) => f.customer },
+  move: { label: "Move", group: "default", render: (f) => moveDisplay(f), sortValue: (f) => froExtra(f, "cargoHandling") + froExtra(f, "decoupling") },
+  source: { label: "Source", group: "default", render: (f) => twoLine(LOCATIONS[f.source].code, LOCATIONS[f.source].name), sortValue: (f) => f.source },
+  destination: { label: "Destination", group: "default", render: (f) => twoLine(LOCATIONS[f.destination].code, LOCATIONS[f.destination].name), sortValue: (f) => f.destination },
+  appointment: { label: "Appointment", group: "default", align: "right", render: (f) => twoLine(f.appointmentTime + "–" + f.appointmentEndTime, f.appointmentDate), sortValue: (f) => f.appointmentTime },
+  relevantLfd: { label: "Relevant LFD", group: "default", align: "right", render: relevantLfdDisplay, sortValue: relevantLfdSortValue },
+  priority: {
+    label: "Priority", group: "default",
+    render: (f) => (f.priority === "priority" ? '<span class="status-pill status-pill--warning">Priority</span>' : '<span class="status-pill status-pill--neutral">Normal</span>'),
+    sortValue: (f) => f.priority,
+  },
+  assignmentStatus: { label: "Assignment Status", group: "default", render: renderAssignmentStatusCell, sortValue: (f) => (f.rejectedBy ? "rejected" : "unassigned") },
+
+  containerSizeDetail: { label: "Size / Type Description", group: "optional", render: (f) => froExtra(f, "containerSize"), sortValue: (f) => f.sizeType },
+  customerDetail: { label: "Customer ID", group: "optional", render: (f) => froExtra(f, "customer"), sortValue: (f) => f.customerId },
+  load: { label: "Load", group: "optional", render: (f) => froExtra(f, "load"), sortValue: (f) => f.load.join("") },
+  cargoHandling: { label: "Cargo Handling", group: "optional", render: (f) => froExtra(f, "cargoHandling"), sortValue: (f) => froExtra(f, "cargoHandling") },
+  decoupling: { label: "Decoupling Service", group: "optional", render: (f) => froExtra(f, "decoupling"), sortValue: (f) => froExtra(f, "decoupling") },
+  demurrageLfd: { label: "Demurrage LFD", group: "optional", align: "right", render: (f) => froExtra(f, "demurrageLfd"), sortValue: (f) => (f.demurrage ? f.demurrage.date + f.demurrage.time : "") },
+  detentionLfd: { label: "Detention LFD", group: "optional", align: "right", render: (f) => froExtra(f, "detentionLfd"), sortValue: (f) => (f.detention ? f.detention.date + f.detention.time : "") },
+  loadStage: { label: "Load / Stage Information", group: "optional", render: (f) => froExtra(f, "loadStage"), sortValue: (f) => froExtra(f, "loadStage") },
+  portApptStart: { label: "Port Appointment Start", group: "optional", render: (f) => froExtra(f, "portApptStart"), sortValue: (f) => f.appointmentTime },
+  portApptEnd: { label: "Port Appointment End", group: "optional", render: (f) => froExtra(f, "portApptEnd"), sortValue: (f) => f.appointmentEndTime },
+  customerAppt: { label: "Customer Appointment", group: "optional", render: (f) => froExtra(f, "customerAppt"), sortValue: (f) => f.appointmentTime },
+  pin: { label: "PIN", group: "optional", render: (f) => froExtra(f, "pin"), sortValue: (f) => froExtra(f, "pin") },
+  chassis: { label: "Recommended Chassis", group: "optional", render: (f) => froExtra(f, "chassis"), sortValue: (f) => froExtra(f, "chassis") },
+  vesselArrival: { label: "Vessel Arrival", group: "optional", render: (f) => froExtra(f, "vesselArrival"), sortValue: (f) => froExtra(f, "vesselArrival") },
+  vesselDeparture: { label: "Vessel Departure", group: "optional", render: (f) => froExtra(f, "vesselDeparture"), sortValue: (f) => froExtra(f, "vesselDeparture") },
+  peelPile: { label: "Peel Pile", group: "optional", render: (f) => froExtra(f, "peelPile"), sortValue: (f) => froExtra(f, "peelPile") },
+  greyPool: { label: "Grey Pool", group: "optional", render: (f) => froExtra(f, "greyPool"), sortValue: (f) => froExtra(f, "greyPool") },
+  edo: { label: "EDO Number", group: "optional", render: (f) => froExtra(f, "edo"), sortValue: (f) => froExtra(f, "edo") },
+  rpn: { label: "RPN / RV", group: "optional", render: (f) => froExtra(f, "rpn"), sortValue: (f) => froExtra(f, "rpn") },
+  containerAvailability: { label: "Container Availability", group: "optional", render: (f) => froExtra(f, "containerAvailability"), sortValue: (f) => froExtra(f, "containerAvailability") },
+  siteCode: { label: "Site Code", group: "optional", render: (f) => froExtra(f, "siteCode"), sortValue: (f) => froExtra(f, "siteCode") },
+  tripType: { label: "Trip Type", group: "optional", render: (f) => froExtra(f, "tripType"), sortValue: (f) => froExtra(f, "tripType") },
+  billOfLading: { label: "Bill of Lading", group: "optional", render: (f) => froExtra(f, "billOfLading"), sortValue: (f) => froExtra(f, "billOfLading") },
+};
+const DEFAULT_FRO_COLUMN_ORDER = ["froBooking", "containerSize", "customer", "move", "source", "destination", "appointment", "relevantLfd", "priority", "assignmentStatus"];
+// Full column order = defaults first, then every remaining registered field (hidden by
+// default) in registry order — one continuous, always-reorderable sequence.
+const INITIAL_FRO_FULL_ORDER = DEFAULT_FRO_COLUMN_ORDER.concat(Object.keys(FRO_FIELD_DEFS).filter((k) => !DEFAULT_FRO_COLUMN_ORDER.includes(k)));
+
+/* ============================================================
+   MOCK DATA — DRIVERS
+   ============================================================ */
+const DRIVERS = [
+  // plannedHours = remaining, not-yet-executed assigned work only (Assigned/Accepted/In Execution).
+  // actualHours = mocked hours already executed today. The two are additive against shiftHours
+  // for the unified Work Today capacity bar — see item 19 of the refinement brief.
+  // actualHours/plannedHours below are derived from each driver's SEED_ASSIGNMENTS using the
+  // same bookkeeping simulateStatus uses: Executed = +HOURS_PER_ORDER actual; In Execution =
+  // +30% actual / +70% planned; Assigned/Accepted = +HOURS_PER_ORDER planned. Keep them in sync
+  // if the seed assignments below change — see DRIVER_ASSIGNMENT_HANDOFF.md §5.
+  { id: "25005", name: "James Carter", truck: "TRK-4420", fuel: "Diesel", vendorName: "Maersk Fleet", vendorType: "Own company", shiftHours: 8, shiftWindow: "07:00–15:00", plannedHours: 2.2, actualHours: 3, nextAvailable: "11:20", nextLocationName: "CSX 59th Street" },
+  { id: "25012", name: "Maria Lopez", truck: "TRK-3312", fuel: "Diesel", vendorName: "Owner Operator", vendorType: "Owner operator", shiftHours: 8, shiftWindow: "07:00–15:00", plannedHours: 1.3, actualHours: 1.3, nextAvailable: "09:45", nextLocationName: "Joliet DC" },
+  { id: "25031", name: "David Kim", truck: "TRK-5501", fuel: "EV", vendorName: "Maersk Fleet", vendorType: "Own company", shiftHours: 10, shiftWindow: "06:00–16:00", plannedHours: 3.5, actualHours: 4.3, nextAvailable: "14:30", nextLocationName: "Chicago Terminal" },
+  { id: "25044", name: "Sarah Johnson", truck: "TRK-2210", fuel: "Diesel", vendorName: "ABC Trucking", vendorType: "3rd-party carrier", shiftHours: 8, shiftWindow: "08:00–16:00", plannedHours: 2.6, actualHours: 0, nextAvailable: "08:30", nextLocationName: "Port of Chicago" },
+  { id: "25059", name: "Robert Chen", truck: "TRK-4417", fuel: "Diesel", vendorName: "Maersk Fleet", vendorType: "Own company", shiftHours: 9, shiftWindow: "07:00–16:00", plannedHours: 2.6, actualHours: 2.6, nextAvailable: "12:15", nextLocationName: "Elgin, IL" },
+  { id: "25067", name: "Angela Torres", truck: "TRK-1108", fuel: "EV", vendorName: "Owner Operator", vendorType: "Owner operator", shiftHours: 8, shiftWindow: "15:00–23:00", plannedHours: 0, actualHours: 0, nextAvailable: "Now", nextLocationName: "CSX 59th Street" },
+  { id: "25078", name: "Mark Williams", truck: "TRK-3390", fuel: "Diesel", vendorName: "ABC Trucking", vendorType: "3rd-party carrier", shiftHours: 8, shiftWindow: "09:00–17:00", plannedHours: 2.2, actualHours: 3, nextAvailable: "10:40", nextLocationName: "Hammond, IN" },
+  { id: "25082", name: "Lisa Park", truck: "TRK-6612", fuel: "Diesel", vendorName: "Maersk Fleet", vendorType: "Own company", shiftHours: 8, shiftWindow: "06:00–14:00", plannedHours: 0, actualHours: 1.3, nextAvailable: "Now", nextLocationName: "Joliet DC" },
+  { id: "25091", name: "Tom Bradley", truck: "TRK-7740", fuel: "EV", vendorName: "Owner Operator", vendorType: "Owner operator", shiftHours: 10, shiftWindow: "12:00–22:00", plannedHours: 3.5, actualHours: 6.9, nextAvailable: "15:45", nextLocationName: "Chicago Terminal" },
+].map((d) => Object.assign(d, {
+  tenstreetId: "TS-" + (120000 + (hashStr(d.id) % 9000)),
+  lastKnownLocation: d.nextLocationName,
+  lastKnownEvent: pick(d.id, ["Gate out", "POD submitted", "Arrived at yard", "Departed terminal"]),
+  assignments: [],
+}));
+
+const SEED_ASSIGNMENTS = {
+  // James Carter — mid-shift: two completed moves already explain his Actual hours,
+  // one In Execution + one Accepted make up the rest of his Planned hours.
+  "25005": [
+    { container: "MSCU0009910", load: "FCL", source: "CSX 59th Street", destination: "Joliet DC", time: "06:30", status: "Executed" },
+    { container: "TCLU2001122", load: "FCL", source: "CSX 59th Street", destination: "Elgin, IL", time: "07:00", status: "Executed" },
+    { container: "MSCU0001110", load: "FCL", source: "CSX 59th Street", destination: "Joliet DC", time: "08:30", status: "In Execution" },
+    { container: "TCLU2093311", load: "FCL", source: "CSX 59th Street", destination: "Chicago Terminal", time: "13:00", status: "Accepted" },
+  ],
+  // Maria Lopez — Scenario A: one completed move this morning explains her Actual hours,
+  // one Assigned move later today explains her Planned hours.
+  "25012": [
+    { container: "MSKU7710023", load: "FCL", source: "Joliet DC", destination: "CSX 59th Street", time: "06:00", status: "Executed" },
+    { container: "MSKU8827121", load: "FCL", source: "Joliet DC", destination: "Gary, IN", time: "09:00", status: "Assigned" },
+  ],
+  // David Kim — Scenario B: three completed moves plus a partially-executed In Execution
+  // item explain his Actual hours; the remainder of his day is Accepted/Assigned Planned work.
+  "25031": [
+    { container: "CAIU1000111", load: "FCL", source: "Chicago Terminal", destination: "Port of Chicago", time: "05:00", status: "Executed" },
+    { container: "TGHU2000222", load: "FCL", source: "Chicago Terminal", destination: "Elgin, IL", time: "05:45", status: "Executed" },
+    { container: "OOLU3000333", load: "FCL", source: "Chicago Terminal", destination: "Gary, IN", time: "06:30", status: "Executed" },
+    { container: "CAIU4471002", load: "FCL", source: "Chicago Terminal", destination: "Port of Chicago", time: "07:15", status: "In Execution" },
+    { container: "TGHU5561233", load: "FCL", source: "Chicago Terminal", destination: "Indianapolis, IN", time: "11:00", status: "Accepted" },
+    { container: "OOLU9821004", load: "FCL", source: "Chicago Terminal", destination: "Hammond, IN", time: "15:00", status: "Assigned" },
+  ],
+  // Sarah Johnson — Scenario C: day hasn't started yet, only Assigned/Accepted Planned work.
+  "25044": [
+    { container: "HLXU3345190", load: "FCL", source: "Port of Chicago", destination: "Elgin, IL", time: "08:00", status: "Assigned" },
+    { container: "HLXU4456201", load: "FCL", source: "Port of Chicago", destination: "Gary, IN", time: "10:30", status: "Accepted" },
+  ],
+  "25059": [
+    { container: "ZIMU2000444", load: "FCL", source: "Elgin, IL", destination: "Chicago Terminal", time: "05:30", status: "Executed" },
+    { container: "MSCU3000555", load: "FCL", source: "Elgin, IL", destination: "Gary, IN", time: "06:15", status: "Executed" },
+    { container: "ZIMU1123887", load: "FCL", source: "Elgin, IL", destination: "Chicago Terminal", time: "07:45", status: "Accepted" },
+    { container: "MSCU7789003", load: "FCL", source: "Elgin, IL", destination: "Gary, IN", time: "12:30", status: "Assigned" },
+  ],
+  // Angela Torres — Scenario D: genuinely unused/available driver, no work at all today.
+  "25067": [],
+  "25078": [
+    { container: "EVGU1000666", load: "FCL", source: "Hammond, IN", destination: "CSX 59th Street", time: "05:00", status: "Executed" },
+    { container: "TCKU2000777", load: "FCL", source: "Hammond, IN", destination: "Joliet DC", time: "05:45", status: "Executed" },
+    { container: "EVGU2245108", load: "FCL", source: "Hammond, IN", destination: "CSX 59th Street", time: "09:30", status: "In Execution" },
+    { container: "TCKU9982341", load: "FCL", source: "Hammond, IN", destination: "Joliet DC", time: "14:15", status: "Assigned" },
+  ],
+  // Lisa Park — Scenario E: completed her one move for the day, nothing remaining.
+  "25082": [
+    { container: "MSKU5000888", load: "FCL", source: "Joliet DC", destination: "CSX 59th Street", time: "06:00", status: "Executed" },
+  ],
+  // Tom Bradley — over-capacity example: five completed moves plus an In Execution item
+  // already explain his high Actual hours, and Accepted/Assigned work pushes his total
+  // past his 10h shift capacity.
+  "25091": [
+    { container: "MSKU1000001", load: "FCL", source: "Chicago Terminal", destination: "CSX 59th Street", time: "04:00", status: "Executed" },
+    { container: "MSKU1000002", load: "FCL", source: "Chicago Terminal", destination: "Elgin, IL", time: "04:30", status: "Executed" },
+    { container: "MSKU1000003", load: "FCL", source: "Chicago Terminal", destination: "Gary, IN", time: "05:00", status: "Executed" },
+    { container: "MSKU1000004", load: "FCL", source: "Chicago Terminal", destination: "Joliet DC", time: "05:30", status: "Executed" },
+    { container: "MSKU1000005", load: "FCL", source: "Chicago Terminal", destination: "Port of Chicago", time: "06:00", status: "Executed" },
+    { container: "MSKU3320981", load: "FCL", source: "Chicago Terminal", destination: "CSX 59th Street", time: "10:00", status: "In Execution" },
+    { container: "HLCU7743210", load: "FCL", source: "Chicago Terminal", destination: "Indianapolis, IN", time: "13:45", status: "Accepted" },
+    { container: "HLCU8000999", load: "FCL", source: "Chicago Terminal", destination: "Hammond, IN", time: "15:30", status: "Assigned" },
+  ],
+};
+DRIVERS.forEach((d) => {
+  d.assignments = (SEED_ASSIGNMENTS[d.id] || []).map((a) => Object.assign({ id: uid("wk"), froId: null, rejectedBy: null }, a));
+});
+
+const DEFAULT_PLANNING_DATE = "2026-08-14";
+const INITIAL_FROS_SNAPSHOT = JSON.parse(JSON.stringify(FROS));
+const INITIAL_DRIVERS_SNAPSHOT = JSON.parse(JSON.stringify(DRIVERS));
+
+function fmtHours(h) { return (Math.round(h * 10) / 10) + "h"; }
+
+/* Unified field registry for the Drivers table — same pattern as FRO_FIELD_DEFS. */
+const DRIVER_FIELD_DEFS = {
+  driver: { label: "Driver", group: "default", render: (d) => twoLine(d.name, d.id + " · " + d.tenstreetId), sortValue: (d) => d.name },
+  truck: { label: "Truck", group: "default", render: (d) => twoLine(d.truck, d.fuel, {}), sortValue: (d) => d.truck },
+  workToday: { label: "Work Today", group: "default", render: (d) => renderCapacityBarCompact(d.actualHours, d.plannedHours, d.shiftHours), sortValue: (d) => d.actualHours + d.plannedHours },
+  assignedWork: { label: "Assigned Work", group: "default", align: "right", render: (d) => activeAssignments(d).length + " orders", sortValue: (d) => activeAssignments(d).length },
+  driverHours: { label: "Driver Hours", group: "default", render: (d) => d.shiftWindow, sortValue: (d) => d.shiftWindow },
+  nextAvailable: { label: "Next Available", group: "default", align: "right", render: (d) => d.nextAvailable, sortValue: (d) => d.nextAvailable },
+  nextLocation: { label: "Next Location", group: "default", render: (d) => d.nextLocationName, sortValue: (d) => d.nextLocationName },
+
+  driverId: { label: "Driver ID", group: "optional", render: (d) => d.id, sortValue: (d) => d.id },
+  tenstreetId: { label: "TenStreet ID", group: "optional", render: (d) => d.tenstreetId, sortValue: (d) => d.tenstreetId },
+  fuel: { label: "Truck Fuel Type", group: "optional", render: (d) => d.fuel, sortValue: (d) => d.fuel },
+  vendorGroup: { label: "Parent Vendor", group: "optional", render: (d) => twoLine(d.vendorName, d.vendorType), sortValue: (d) => d.vendorName },
+  vendorName: { label: "Parent Vendor Name", group: "optional", render: (d) => d.vendorName, sortValue: (d) => d.vendorName },
+  vendorType: { label: "Parent Vendor Type", group: "optional", render: (d) => d.vendorType, sortValue: (d) => d.vendorType },
+  lastKnownLocation: { label: "Last Known Location", group: "optional", render: (d) => d.lastKnownLocation, sortValue: (d) => d.lastKnownLocation },
+  lastKnownEvent: { label: "Last Known Actual Event", group: "optional", render: (d) => d.lastKnownEvent, sortValue: (d) => d.lastKnownEvent },
+  nextCity: { label: "Next Available City", group: "optional", render: (d) => d.nextLocationName.split(",")[0], sortValue: (d) => d.nextLocationName },
+};
+const DEFAULT_DRIVER_COLUMN_ORDER = ["driver", "truck", "workToday", "assignedWork", "driverHours", "nextAvailable", "nextLocation"];
+const INITIAL_DRIVER_FULL_ORDER = DEFAULT_DRIVER_COLUMN_ORDER.concat(Object.keys(DRIVER_FIELD_DEFS).filter((k) => !DEFAULT_DRIVER_COLUMN_ORDER.includes(k)));
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const STATE = {
+  froQuery: "",
+  driverQuery: "",
+  driverFilterMode: "all", // 'all' | 'recommended'
+  selectedFroIds: new Set(),
+  froColumnFullOrder: [...INITIAL_FRO_FULL_ORDER],
+  froVisibleKeys: new Set(DEFAULT_FRO_COLUMN_ORDER),
+  driverColumnFullOrder: [...INITIAL_DRIVER_FULL_ORDER],
+  driverVisibleKeys: new Set(DEFAULT_DRIVER_COLUMN_ORDER),
+  scope: { customers: new Set(), locations: new Set(), moveTypes: new Set() },
+  froFilters: { customer: new Set(), source: new Set(), load: new Set(), priority: new Set(), assignmentStatus: new Set() },
+  driverFilters: { nextLocation: new Set(), vendorType: new Set(), fuel: new Set() },
+  panel: { open: false, driverId: null, mode: "inspect", reassigning: null }, // mode: 'inspect' | 'assign'
+  planningDate: "2026-08-14",
+  fallout: [], // prototype-only morning reconciliation queue — see refreshForPlanningDate
+};
+
+function visibleFroColumns() {
+  return STATE.froColumnFullOrder.filter((k) => STATE.froVisibleKeys.has(k));
+}
+function visibleDriverColumns() {
+  return STATE.driverColumnFullOrder.filter((k) => STATE.driverVisibleKeys.has(k));
+}
+
+function activeAssignments(d) {
+  return d.assignments.filter((a) => a.status !== "Executed" && a.status !== "Rejected");
+}
+function visibleWorkItems(d) {
+  // Rejected items stay visible as history (clearly marked) so the dispatcher can see why
+  // an order left this driver's day — they no longer count toward Planned hours.
+  return d.assignments;
+}
+
+/* ============================================================
+   TABS
+   ============================================================ */
+document.querySelectorAll(".app-header__tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".app-header__tab").forEach((b) => {
+      b.classList.remove("app-header__tab--active");
+      b.removeAttribute("aria-current");
+    });
+    btn.classList.add("app-header__tab--active");
+    btn.setAttribute("aria-current", "page");
+    const target = btn.dataset.tab;
+    document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("tab-panel--active", p.dataset.panel === target));
+  });
+});
+
+/* ============================================================
+   PORT / TERMINAL
+   ============================================================ */
+const SCOPE_CUSTOMERS = ["Maersk", "Adidas", "Nike", "IKEA", "H&M"];
+const SCOPE_MOVE_TYPES = ["Live Load", "Live Unload", "Drop & Hook"];
+
+function updateScopeFiltersButton() {
+  const count = STATE.scope.customers.size + STATE.scope.locations.size + STATE.scope.moveTypes.size;
+  const badge = document.getElementById("scope-filters-badge");
+  badge.style.display = count ? "inline-block" : "none";
+  badge.textContent = count;
+}
+
+function renderScopeFiltersPanel() {
+  const overlay = document.getElementById("scope-filters-overlay");
+  overlay.innerHTML = `
+    <div class="scope-panel">
+      <div class="scope-panel__header">
+        <p class="scope-panel__title">Scope Filters</p>
+        <div class="scope-panel__header-actions">
+          <button type="button" class="btn-secondary" id="scope-clear-all">Clear All</button>
+          <button type="button" class="panel-close" id="scope-panel-close" aria-label="Close Scope Filters">✕</button>
+        </div>
+      </div>
+      <div class="scope-panel__body">
+        <div class="scope-section">
+          <p class="scope-section__title">Customers</p>
+          ${SCOPE_CUSTOMERS.map((c) => `
+            <label class="popover__row"><input type="checkbox" data-scope-customer="${c}" ${STATE.scope.customers.has(c) ? "checked" : ""}/> ${c}</label>
+          `).join("")}
+        </div>
+        <div class="scope-section">
+          <p class="scope-section__title">Ports / Terminals</p>
+          ${PORT_TERMINAL_OPTIONS.map((p) => `
+            <label class="popover__row"><input type="checkbox" data-scope-location="${p}" ${STATE.scope.locations.has(p) ? "checked" : ""}/> ${p}</label>
+          `).join("")}
+        </div>
+        <div class="scope-section">
+          <p class="scope-section__title">Move Type</p>
+          ${SCOPE_MOVE_TYPES.map((m) => `
+            <label class="popover__row"><input type="checkbox" data-scope-move="${m}" ${STATE.scope.moveTypes.has(m) ? "checked" : ""}/> ${m}</label>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+  overlay.querySelectorAll("[data-scope-customer]").forEach((cb) => cb.addEventListener("change", () => {
+    if (cb.checked) STATE.scope.customers.add(cb.dataset.scopeCustomer); else STATE.scope.customers.delete(cb.dataset.scopeCustomer);
+    updateScopeFiltersButton(); renderFro(); renderDrivers();
+  }));
+  overlay.querySelectorAll("[data-scope-location]").forEach((cb) => cb.addEventListener("change", () => {
+    if (cb.checked) STATE.scope.locations.add(cb.dataset.scopeLocation); else STATE.scope.locations.delete(cb.dataset.scopeLocation);
+    updateScopeFiltersButton(); renderFro(); renderDrivers();
+  }));
+  overlay.querySelectorAll("[data-scope-move]").forEach((cb) => cb.addEventListener("change", () => {
+    if (cb.checked) STATE.scope.moveTypes.add(cb.dataset.scopeMove); else STATE.scope.moveTypes.delete(cb.dataset.scopeMove);
+    updateScopeFiltersButton(); renderFro(); renderDrivers();
+  }));
+  document.getElementById("scope-clear-all").addEventListener("click", () => {
+    STATE.scope.customers.clear(); STATE.scope.locations.clear(); STATE.scope.moveTypes.clear();
+    updateScopeFiltersButton(); renderFro(); renderDrivers(); renderScopeFiltersPanel();
+  });
+  document.getElementById("scope-panel-close").addEventListener("click", closeScopeFiltersPanel);
+}
+
+function openScopeFiltersPanel() {
+  document.getElementById("scope-filters-overlay").classList.add("scope-filters-overlay--open");
+  renderScopeFiltersPanel();
+}
+function closeScopeFiltersPanel() {
+  document.getElementById("scope-filters-overlay").classList.remove("scope-filters-overlay--open");
+}
+document.getElementById("scope-filters-btn").addEventListener("click", () => {
+  const overlay = document.getElementById("scope-filters-overlay");
+  if (overlay.classList.contains("scope-filters-overlay--open")) closeScopeFiltersPanel();
+  else openScopeFiltersPanel();
+});
+
+/* ============================================================
+   FREIGHT ORDERS TABLE
+   ============================================================ */
+let froSortKey = "relevantLfd";
+let froSortAsc = true;
+
+function froMatchesSearch(f, q) {
+  if (!q) return true;
+  q = q.toLowerCase();
+  return f.froNumber.toLowerCase().includes(q) || f.bookingNumber.toLowerCase().includes(q) || f.containerNumber.toLowerCase().includes(q);
+}
+function froMatchesFilters(f) {
+  const flt = STATE.froFilters;
+  if (flt.customer.size && !flt.customer.has(f.customer)) return false;
+  if (flt.source.size && !flt.source.has(f.source)) return false;
+  if (flt.load.size && !flt.load.has(f.load.join("+"))) return false;
+  if (flt.priority.size && !flt.priority.has(f.priority)) return false;
+  if (flt.assignmentStatus.size && !flt.assignmentStatus.has(f.rejectedBy ? "rejected" : "unassigned")) return false;
+  return true;
+}
+function froMatchesScope(f) {
+  const scope = STATE.scope;
+  if (scope.customers.size && !scope.customers.has(f.customer)) return false;
+  if (scope.locations.size && !scope.locations.has("All Chicago locations")) {
+    if (!scope.locations.has(f.source) && !scope.locations.has(f.destination)) return false;
+  }
+  if (scope.moveTypes.size) {
+    const cargo = froExtra(f, "cargoHandling");
+    if (!scope.moveTypes.has(cargo)) return false;
+  }
+  return true;
+}
+function driverMatchesScope(d) {
+  const scope = STATE.scope;
+  if (scope.locations.size && !scope.locations.has("All Chicago locations")) {
+    if (!scope.locations.has(d.nextLocationName)) return false;
+  }
+  return true;
+}
+
+function renderFroHead() {
+  const row = document.getElementById("fro-head-row");
+  let html = '<th class="checkbox-cell"></th>';
+  html += visibleFroColumns().map((key) => {
+    const def = FRO_FIELD_DEFS[key];
+    const active = key === froSortKey;
+    const icon = active ? (froSortAsc ? ICON_UP : ICON_DOWN) : ICON_SORT;
+    return `<th${def.align === "right" ? ' class="align-right"' : ""}><button type="button" class="th-sort" data-sort="${key}">${def.label}${icon}</button></th>`;
+  }).join("");
+  row.innerHTML = html;
+  row.querySelectorAll("[data-sort]").forEach((btn) => btn.addEventListener("click", () => {
+    const key = btn.dataset.sort;
+    if (key === froSortKey) froSortAsc = !froSortAsc;
+    else { froSortKey = key; froSortAsc = true; }
+    renderFro();
+  }));
+}
+
+function froSortValue(f, key) {
+  const def = FRO_FIELD_DEFS[key];
+  return def ? def.sortValue(f) : "";
+}
+
+function renderFroBody() {
+  const pool = FROS.filter((f) => f.status !== "assigned");
+  let rows = pool.filter((f) => froMatchesSearch(f, STATE.froQuery) && froMatchesFilters(f) && froMatchesScope(f));
+  rows = rows.slice().sort((a, b) => {
+    const cmp = String(froSortValue(a, froSortKey)).localeCompare(String(froSortValue(b, froSortKey)));
+    return froSortAsc ? cmp : -cmp;
+  });
+
+  const totalCols = 1 + visibleFroColumns().length;
+
+  if (!rows.length) {
+    document.getElementById("fro-body").innerHTML = `<tr class="empty-row"><td colspan="${totalCols}">No freight orders match the current search / filters.</td></tr>`;
+    return;
+  }
+
+  document.getElementById("fro-body").innerHTML = rows.map((f) => {
+    const selected = STATE.selectedFroIds.has(f.id);
+    return `
+      <tr class="${selected ? "row--selected" : ""}" data-fro-row="${f.id}">
+        <td class="checkbox-cell"><input type="checkbox" ${selected ? "checked" : ""} ${f.onHold ? "disabled" : ""} data-select-fro="${f.id}" aria-label="Select ${f.froNumber}" title="${f.onHold ? "Release hold before assigning" : ""}" /></td>
+        ${visibleFroColumns().map((key) => {
+          const def = FRO_FIELD_DEFS[key];
+          return `<td${def.align === "right" ? ' class="align-right"' : ""}>${def.render(f)}</td>`;
+        }).join("")}
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("fro-body").querySelectorAll("[data-select-fro]").forEach((cb) => {
+    cb.addEventListener("click", (e) => e.stopPropagation());
+    cb.addEventListener("change", () => {
+      const id = cb.dataset.selectFro;
+      if (cb.checked) STATE.selectedFroIds.add(id); else STATE.selectedFroIds.delete(id);
+      onSelectionChanged();
+    });
+  });
+
+  document.getElementById("fro-body").querySelectorAll("[data-rejected-info]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const wasOpen = !!btn.parentElement.querySelector(".popover");
+      closeAllPopovers();
+      if (wasOpen) return;
+      const fro = FROS.find((f) => f.id === btn.dataset.rejectedInfo);
+      if (!fro) return;
+      const pop = document.createElement("div");
+      pop.className = "popover";
+      pop.style.width = "220px";
+      pop.innerHTML = `
+        <div class="popover__title">Rejected By</div>
+        <div style="padding:2px 2px 8px;font-size:13px;color:var(--text-strong);font-weight:600">${fro.rejectedBy}</div>
+        <div class="popover__title">Reason</div>
+        <div style="padding:2px;font-size:12.5px;color:var(--text-secondary)">${fro.rejectionReason || "Not specified"}</div>
+      `;
+      btn.parentElement.style.position = "relative";
+      btn.parentElement.appendChild(pop);
+    });
+  });
+
+  document.getElementById("fro-body").querySelectorAll("[data-release-hold]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      releaseHold(btn.dataset.releaseHold);
+    });
+  });
+}
+
+/* ---------- Put on Hold / Release Hold (prototype-level, no history/audit) ---------- */
+function renderHoldSlot() {
+  const slot = document.getElementById("fro-hold-slot");
+  const count = STATE.selectedFroIds.size;
+  if (!count) { slot.innerHTML = ""; return; }
+  slot.innerHTML = `<button type="button" class="icon-button" id="hold-btn">Put on Hold</button>`;
+  document.getElementById("hold-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeAllPopovers();
+    const pop = document.createElement("div");
+    pop.className = "popover";
+    pop.style.width = "240px";
+    pop.innerHTML = `
+      <div class="popover__title">Reason for Hold</div>
+      <input type="text" class="popover__search" id="hold-reason-input" value="Waiting for customer confirmation" />
+      <button type="button" class="btn-primary" id="hold-confirm-btn" style="width:100%;margin-top:8px">Put on Hold</button>
+    `;
+    slot.appendChild(pop);
+    document.getElementById("hold-confirm-btn").addEventListener("click", () => {
+      const input = document.getElementById("hold-reason-input");
+      putSelectedOnHold((input.value || "").trim() || "Waiting for customer confirmation");
+    });
+  });
+}
+
+function putSelectedOnHold(reason) {
+  const ids = Array.from(STATE.selectedFroIds);
+  ids.forEach((id) => {
+    const fro = FROS.find((f) => f.id === id);
+    if (!fro) return;
+    fro.onHold = true;
+    fro.holdReason = reason;
+  });
+  closeAllPopovers();
+  toast(`${ids.length} freight order${ids.length > 1 ? "s" : ""} put on hold.`);
+  STATE.selectedFroIds.clear();
+  STATE.driverFilterMode = "all";
+  syncDriverToggleUI();
+  if (STATE.panel.open) { STATE.panel.mode = "inspect"; }
+  renderFro();
+  renderDrivers();
+  if (STATE.panel.open) renderAssignmentPanel();
+}
+
+function releaseHold(id) {
+  const fro = FROS.find((f) => f.id === id);
+  if (!fro) return;
+  fro.onHold = false;
+  fro.holdReason = null;
+  closeAllPopovers();
+  toast(`${fro.froNumber} hold released — available for assignment again.`);
+  renderFro();
+}
+
+const THIRD_PARTY_VENDORS = ["ABC Trucking", "XPO Logistics", "Werner Enterprises"];
+
+function renderThirdPartySlot() {
+  const slot = document.getElementById("fro-third-party-slot");
+  const count = STATE.selectedFroIds.size;
+  if (!count) { slot.innerHTML = ""; return; }
+  slot.innerHTML = `<button type="button" class="icon-button" id="third-party-btn">Assign to Third Party</button>`;
+  document.getElementById("third-party-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    closeAllPopovers();
+    const pop = document.createElement("div");
+    pop.className = "popover";
+    pop.style.width = "220px";
+    pop.innerHTML = `<div class="popover__title">Mocked Vendors</div>` + THIRD_PARTY_VENDORS.map((v) =>
+      `<button type="button" class="dropdown-menu__item" data-vendor="${v}" style="width:100%">${v}</button>`
+    ).join("");
+    slot.appendChild(pop);
+    pop.querySelectorAll("[data-vendor]").forEach((b) => b.addEventListener("click", () => assignSelectedToThirdParty(b.dataset.vendor)));
+  });
+}
+
+function assignSelectedToThirdParty(vendorName) {
+  const ids = Array.from(STATE.selectedFroIds);
+  ids.forEach((id) => {
+    const fro = FROS.find((f) => f.id === id);
+    if (!fro || fro.onHold) return;
+    fro.status = "assigned";
+    fro.assignedDriverId = null;
+    fro.thirdPartyVendor = vendorName;
+    fro.rejectedBy = null;
+  });
+  closeAllPopovers();
+  toast(`${ids.length} freight order${ids.length > 1 ? "s" : ""} assigned to ${vendorName} (third party).`);
+  STATE.selectedFroIds.clear();
+  STATE.driverFilterMode = "all";
+  syncDriverToggleUI();
+  renderFro();
+  renderDrivers();
+}
+
+function renderFro() {
+  const pool = FROS.filter((f) => f.status !== "assigned");
+  document.getElementById("fro-title").textContent = `Freight Orders for Assignment (${pool.length})`;
+  renderFroHead();
+  renderFroBody();
+  updateFroFiltersBadge();
+  renderThirdPartySlot();
+  renderHoldSlot();
+  renderFroSelectionNote();
+}
+
+/* Two distinct, intentionally separate messages: this one is about Recommended-driver
+   matching (no shared source location among the selected FROs); the disconnected-sequence
+   warning in the assignment panel is about an operational gap between the selected moves.
+   Do not merge them. */
+function renderFroSelectionNote() {
+  const host = document.getElementById("fro-selection-note");
+  const selectedFros = FROS.filter((f) => STATE.selectedFroIds.has(f.id));
+  if (selectedFros.length < 2) { host.innerHTML = ""; return; }
+  const sources = new Set(selectedFros.map((f) => f.source));
+  host.innerHTML = sources.size > 1
+    ? `<div class="inline-note inline-note--neutral">The selected freight orders do not share one matching location. All drivers remain available.</div>`
+    : "";
+}
+
+document.getElementById("fro-search").addEventListener("input", (e) => { STATE.froQuery = e.target.value; renderFroBody(); });
+
+function syncDriverToggleUI() {
+  document.querySelectorAll("[data-driver-filter]").forEach((b) => b.classList.toggle("toggle-group__button--active", b.dataset.driverFilter === STATE.driverFilterMode));
+}
+function onSelectionChanged() {
+  renderFroBody();
+  renderThirdPartySlot();
+  renderHoldSlot();
+  renderFroSelectionNote();
+  STATE.driverFilterMode = STATE.selectedFroIds.size > 0 ? "recommended" : "all";
+  syncDriverToggleUI();
+  renderDrivers();
+  if (STATE.panel.open) {
+    STATE.panel.mode = STATE.selectedFroIds.size > 0 ? "assign" : "inspect";
+    renderAssignmentPanel();
+  }
+}
+
+/* ============================================================
+   FRO FILTERS POPOVER
+   ============================================================ */
+function updateFroFiltersBadge() {
+  const count = Object.values(STATE.froFilters).reduce((n, s) => n + s.size, 0);
+  const badge = document.getElementById("fro-filters-badge");
+  badge.style.display = count ? "inline-block" : "none";
+  badge.textContent = count;
+}
+document.getElementById("fro-filters-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeAllPopovers();
+  const pool = FROS.filter((f) => f.status !== "assigned");
+  const groups = [
+    { key: "customer", label: "Customer", values: Array.from(new Set(pool.map((f) => f.customer))) },
+    { key: "source", label: "Source", values: Array.from(new Set(pool.map((f) => f.source))) },
+    { key: "load", label: "Load", values: Array.from(new Set(pool.map((f) => f.load.join("+")))) },
+    { key: "priority", label: "Priority", values: ["priority", "normal"] },
+    { key: "assignmentStatus", label: "Assignment Status", values: ["unassigned", "rejected"] },
+  ];
+  const pop = document.createElement("div");
+  pop.className = "popover";
+  pop.id = "fro-filters-popover-el";
+  pop.innerHTML = groups.map((g) => `
+    <div class="popover__title">${g.label}</div>
+    ${g.values.map((v) => `
+      <div class="popover__row">
+        <label><input type="checkbox" data-fro-filter="${g.key}" value="${v}" ${STATE.froFilters[g.key].has(v) ? "checked" : ""}/> ${({ priority: "Priority", normal: "Normal", unassigned: "Unassigned", rejected: "Rejected" })[v] || v}</label>
+      </div>
+    `).join("")}
+  `).join("");
+  document.getElementById("fro-filters-popover").appendChild(pop);
+  pop.querySelectorAll("[data-fro-filter]").forEach((cb) => cb.addEventListener("change", () => {
+    const key = cb.dataset.froFilter;
+    if (cb.checked) STATE.froFilters[key].add(cb.value); else STATE.froFilters[key].delete(cb.value);
+    renderFro();
+  }));
+});
+
+/* ============================================================
+   COLUMN PERSONALIZATION — shared by Freight Orders and Drivers.
+   STATE.*ColumnFullOrder holds every registered column (shown or hidden) in
+   one continuous order; STATE.*VisibleKeys says which of them are currently
+   shown. Reordering always acts on the full list, so a hidden column keeps
+   its place and shows up there the moment it's checked back on.
+   ============================================================ */
+/* One continuous, always-reorderable column list. `fullOrder` holds every
+   registered field (checked or not) in display order; `visibleKeys` is just
+   which of them are currently shown. Dragging reorders fullOrder regardless
+   of a row's checked state; the checkbox only ever touches visibleKeys. */
+function buildColumnSettingsHTML(fullOrder, visibleKeys, fieldDefs) {
+  return `
+    <input type="text" class="popover__search" placeholder="Search columns" data-col-search />
+    <div class="popover__title">Columns</div>
+    <div data-column-list>
+      ${fullOrder.map((k) => `
+        <div class="popover__row popover__row--draggable" draggable="true" data-col-key="${k}">
+          <span class="drag-handle" aria-hidden="true">≡</span>
+          <label style="flex:1"><input type="checkbox" data-col-toggle="${k}" ${visibleKeys.has(k) ? "checked" : ""}/> ${fieldDefs[k].label}</label>
+        </div>
+      `).join("")}
+    </div>
+  `;
+}
+function wireColumnSettings(pop, fullOrder, visibleKeys, fieldDefs, onChange) {
+  const rebuild = () => {
+    onChange();
+    pop.innerHTML = buildColumnSettingsHTML(fullOrder, visibleKeys, fieldDefs);
+    wireColumnSettings(pop, fullOrder, visibleKeys, fieldDefs, onChange);
+  };
+  pop.querySelectorAll("[data-col-toggle]").forEach((cb) => cb.addEventListener("change", () => {
+    const key = cb.dataset.colToggle;
+    if (cb.checked) visibleKeys.add(key); else visibleKeys.delete(key);
+    rebuild();
+  }));
+  let dragKey = null;
+  pop.querySelectorAll("[data-col-key][draggable]").forEach((row) => {
+    row.addEventListener("dragstart", () => { dragKey = row.dataset.colKey; });
+    row.addEventListener("dragover", (e) => e.preventDefault());
+    row.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const targetKey = row.dataset.colKey;
+      if (!dragKey || dragKey === targetKey) return;
+      const from = fullOrder.indexOf(dragKey), to = fullOrder.indexOf(targetKey);
+      if (from === -1 || to === -1) return;
+      fullOrder.splice(from, 1);
+      fullOrder.splice(to, 0, dragKey);
+      rebuild();
+    });
+  });
+  const search = pop.querySelector("[data-col-search]");
+  if (search) search.addEventListener("input", () => {
+    const q = search.value.toLowerCase();
+    pop.querySelectorAll("[data-col-key]").forEach((row) => {
+      row.style.display = fieldDefs[row.dataset.colKey].label.toLowerCase().includes(q) ? "" : "none";
+    });
+  });
+}
+
+document.getElementById("fro-settings-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeAllPopovers();
+  const pop = document.createElement("div");
+  pop.className = "popover popover--columns";
+  pop.innerHTML = buildColumnSettingsHTML(STATE.froColumnFullOrder, STATE.froVisibleKeys, FRO_FIELD_DEFS);
+  document.getElementById("fro-settings-popover").appendChild(pop);
+  wireColumnSettings(pop, STATE.froColumnFullOrder, STATE.froVisibleKeys, FRO_FIELD_DEFS, renderFro);
+});
+
+/* ============================================================
+   DRIVERS TABLE
+   ============================================================ */
+let driverSortKey = "workToday";
+let driverSortAsc = false;
+
+document.querySelectorAll("[data-driver-filter]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    STATE.driverFilterMode = btn.dataset.driverFilter;
+    document.querySelectorAll("[data-driver-filter]").forEach((b) => b.classList.toggle("toggle-group__button--active", b === btn));
+    renderDrivers();
+  });
+});
+document.getElementById("drivers-search").addEventListener("input", (e) => { STATE.driverQuery = e.target.value; renderDrivers(); });
+
+function computeRecommendedIds() {
+  if (!STATE.selectedFroIds.size) return null;
+  const selectedFros = FROS.filter((f) => STATE.selectedFroIds.has(f.id));
+  const sourceNames = new Set(selectedFros.map((f) => f.source));
+  return new Set(
+    DRIVERS.filter((d) => sourceNames.has(d.nextLocationName) && !selectedFros.some((f) => f.rejectedBy === d.name)).map((d) => d.id)
+  );
+}
+function driverMatchesSearch(d, q) {
+  if (!q) return true;
+  q = q.toLowerCase();
+  return d.name.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.tenstreetId.toLowerCase().includes(q) || d.truck.toLowerCase().includes(q);
+}
+function driverMatchesFilters(d) {
+  const flt = STATE.driverFilters;
+  if (flt.nextLocation.size && !flt.nextLocation.has(d.nextLocationName)) return false;
+  if (flt.vendorType.size && !flt.vendorType.has(d.vendorType)) return false;
+  if (flt.fuel.size && !flt.fuel.has(d.fuel)) return false;
+  return true;
+}
+
+function renderDriversHead() {
+  const row = document.getElementById("drivers-head-row");
+  let html = '<th class="checkbox-cell"></th>';
+  html += visibleDriverColumns().map((key) => {
+    const def = DRIVER_FIELD_DEFS[key];
+    const active = key === driverSortKey;
+    const icon = active ? (driverSortAsc ? ICON_UP : ICON_DOWN) : ICON_SORT;
+    const alignClass = def.align === "right" ? "align-right" : def.align === "center" ? "align-center" : "";
+    return `<th${alignClass ? ` class="${alignClass}"` : ""}><button type="button" class="th-sort" data-dsort="${key}">${def.label}${icon}</button></th>`;
+  }).join("");
+  row.innerHTML = html;
+  row.querySelectorAll("[data-dsort]").forEach((btn) => btn.addEventListener("click", () => {
+    const key = btn.dataset.dsort;
+    if (key === driverSortKey) driverSortAsc = !driverSortAsc;
+    else { driverSortKey = key; driverSortAsc = true; }
+    renderDrivers();
+  }));
+}
+
+function driverSortValue(d, key) {
+  const def = DRIVER_FIELD_DEFS[key];
+  return def ? def.sortValue(d) : "";
+}
+
+function renderDriversBody() {
+  let rows = DRIVERS.filter((d) => driverMatchesSearch(d, STATE.driverQuery) && driverMatchesFilters(d) && driverMatchesScope(d));
+  const recommendedIds = computeRecommendedIds();
+  const showRecommendedOnly = STATE.driverFilterMode === "recommended" && recommendedIds;
+
+  let title = `Drivers (${DRIVERS.length})`;
+  if (STATE.selectedFroIds.size) {
+    const shown = showRecommendedOnly ? rows.filter((d) => recommendedIds.has(d.id)) : rows;
+    title = `Drivers for Selected Freight (${shown.length})`;
+  }
+  document.getElementById("drivers-title").textContent = title;
+
+  if (showRecommendedOnly) rows = rows.filter((d) => recommendedIds.has(d.id));
+
+  rows = rows.slice().sort((a, b) => {
+    const av = driverSortValue(a, driverSortKey), bv = driverSortValue(b, driverSortKey);
+    const cmp = typeof av === "number" && typeof bv === "number" ? av - bv : String(av).localeCompare(String(bv));
+    return driverSortAsc ? cmp : -cmp;
+  });
+
+  const totalCols = 1 + visibleDriverColumns().length;
+  const selectedFros = FROS.filter((f) => STATE.selectedFroIds.has(f.id));
+
+  if (!rows.length) {
+    const msg = showRecommendedOnly
+      ? "No drivers are currently at the selected freight order's location. Switch to All drivers to choose manually."
+      : "No drivers match the current search / filters.";
+    document.getElementById("drivers-body").innerHTML = `<tr class="empty-row"><td colspan="${totalCols}">${msg}</td></tr>`;
+    return;
+  }
+
+  document.getElementById("drivers-body").innerHTML = rows.map((d) => {
+    const clickable = true;
+    const active = STATE.panel.open && STATE.panel.driverId === d.id;
+    const previouslyRejected = selectedFros.some((f) => f.rejectedBy === d.name);
+    return `
+      <tr class="${active ? "row--active" : ""} ${clickable ? "row--clickable" : ""}" data-driver-row="${d.id}">
+        <td class="checkbox-cell"></td>
+        ${visibleDriverColumns().map((key) => {
+          const def = DRIVER_FIELD_DEFS[key];
+          const alignClass = def.align === "right" ? "align-right" : def.align === "center" ? "align-center" : "";
+          const note = key === "driver" && previouslyRejected ? `<span class="rejected-note">Previously rejected this FRO</span>` : "";
+          return `<td${alignClass ? ` class="${alignClass}"` : ""}>${def.render(d)}${note}</td>`;
+        }).join("")}
+      </tr>
+    `;
+  }).join("");
+
+  document.getElementById("drivers-body").querySelectorAll("[data-driver-row]").forEach((tr) => {
+    tr.addEventListener("click", () => openDriverPanel(tr.dataset.driverRow));
+  });
+}
+
+function renderDrivers() { renderDriversHead(); renderDriversBody(); updateDriversFiltersBadge(); }
+
+/* ---------- Drivers filters popover ---------- */
+function updateDriversFiltersBadge() {
+  const count = Object.values(STATE.driverFilters).reduce((n, s) => n + s.size, 0);
+  const badge = document.getElementById("drivers-filters-badge");
+  badge.style.display = count ? "inline-block" : "none";
+  badge.textContent = count;
+}
+document.getElementById("drivers-filters-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeAllPopovers();
+  const groups = [
+    { key: "nextLocation", label: "Next location", values: Array.from(new Set(DRIVERS.map((d) => d.nextLocationName))) },
+    { key: "vendorType", label: "Parent vendor type", values: Array.from(new Set(DRIVERS.map((d) => d.vendorType))) },
+    { key: "fuel", label: "Fuel type", values: Array.from(new Set(DRIVERS.map((d) => d.fuel))) },
+  ];
+  const pop = document.createElement("div");
+  pop.className = "popover";
+  pop.innerHTML = groups.map((g) => `
+    <div class="popover__title">${g.label}</div>
+    ${g.values.map((v) => `
+      <div class="popover__row">
+        <label><input type="checkbox" data-driver-filter-chk="${g.key}" value="${v}" ${STATE.driverFilters[g.key].has(v) ? "checked" : ""}/> ${v}</label>
+      </div>
+    `).join("")}
+  `).join("");
+  document.getElementById("drivers-filters-popover").appendChild(pop);
+  pop.querySelectorAll("[data-driver-filter-chk]").forEach((cb) => cb.addEventListener("change", () => {
+    const key = cb.dataset.driverFilterChk;
+    if (cb.checked) STATE.driverFilters[key].add(cb.value); else STATE.driverFilters[key].delete(cb.value);
+    renderDrivers();
+  }));
+});
+
+document.getElementById("drivers-settings-btn").addEventListener("click", (e) => {
+  e.stopPropagation();
+  closeAllPopovers();
+  const pop = document.createElement("div");
+  pop.className = "popover popover--columns";
+  pop.innerHTML = buildColumnSettingsHTML(STATE.driverColumnFullOrder, STATE.driverVisibleKeys, DRIVER_FIELD_DEFS);
+  document.getElementById("drivers-settings-popover").appendChild(pop);
+  wireColumnSettings(pop, STATE.driverColumnFullOrder, STATE.driverVisibleKeys, DRIVER_FIELD_DEFS, renderDrivers);
+});
+
+/* ============================================================
+   ASSIGNMENT PANEL
+   ============================================================ */
+function openDriverPanel(driverId) {
+  STATE.panel.open = true;
+  STATE.panel.driverId = driverId;
+  STATE.panel.mode = STATE.selectedFroIds.size > 0 ? "assign" : "inspect";
+  STATE.panel.reassigning = null;
+  document.getElementById("assignment-panel").classList.add("assignment-panel--open");
+  renderAssignmentPanel();
+  renderDriversBody();
+}
+function closeDriverPanel() {
+  STATE.panel.open = false;
+  STATE.panel.driverId = null;
+  STATE.panel.reassigning = null;
+  document.getElementById("assignment-panel").classList.remove("assignment-panel--open");
+  renderDriversBody();
+}
+
+const HOURS_PER_ORDER = 1.3;
+function projectedPlannedHours(d, extraOrders) {
+  return Math.round((d.plannedHours + extraOrders * HOURS_PER_ORDER) * 10) / 10;
+}
+function hoursRemainingLabel(planned, shift) {
+  const remaining = Math.round((shift - planned) * 10) / 10;
+  return remaining >= 0 ? `${fmtHours(remaining)} remaining capacity` : `+${fmtHours(Math.abs(remaining))} over capacity`;
+}
+
+/* Unified Horizon-style stacked capacity bar: Actual (solid) + Planned (solid) +
+   Projected (striped, split at the capacity line into an in-capacity portion and
+   an over-capacity portion in warning color). Absolute hours, not percentages. */
+function renderCapacityBar(actual, planned, projectedIncrement, capacity) {
+  const totalBase = Math.round((actual + planned) * 10) / 10;
+  const total = Math.round((totalBase + projectedIncrement) * 10) / 10;
+  const scale = Math.max(capacity, total, 0.1);
+  const pct = (h) => Math.max(0, (h / scale) * 100);
+  const spaceUnderCap = Math.max(0, Math.round((capacity - totalBase) * 10) / 10);
+  const projectedUnder = Math.min(projectedIncrement, spaceUnderCap);
+  const projectedOver = Math.round((projectedIncrement - projectedUnder) * 10) / 10;
+  const overCapacity = Math.max(0, Math.round((total - capacity) * 10) / 10);
+  const tickPct = scale > capacity ? pct(capacity) : null;
+
+  return `
+    <div class="capacity-bar-outer">
+      <div class="capacity-bar">
+        ${actual > 0 ? `<div class="capacity-bar__seg capacity-bar__seg--actual" style="width:${pct(actual)}%"></div>` : ""}
+        ${planned > 0 ? `<div class="capacity-bar__seg capacity-bar__seg--planned" style="width:${pct(planned)}%"></div>` : ""}
+        ${projectedUnder > 0 ? `<div class="capacity-bar__seg capacity-bar__seg--projected" style="width:${pct(projectedUnder)}%"></div>` : ""}
+        ${projectedOver > 0 ? `<div class="capacity-bar__seg capacity-bar__seg--over" style="width:${pct(projectedOver)}%"></div>` : ""}
+      </div>
+      ${tickPct !== null ? `<div class="capacity-bar__tick" style="left:${tickPct}%"><span class="capacity-bar__tick-label">${fmtHours(capacity)}</span></div>` : ""}
+    </div>
+    <div class="capacity-caption">
+      <span>Actual ${fmtHours(actual)} · Planned ${fmtHours(planned)}${projectedIncrement > 0 ? ` · Projected +${fmtHours(projectedIncrement)}` : ""}</span>
+    </div>
+    ${overCapacity > 0 ? `<div class="capacity-warning">+${fmtHours(overCapacity)} Over Capacity</div>` : ""}
+  `;
+}
+
+/* Compact Work Today cell for the Drivers table — fixed-width bar so it never
+   shifts position between rows regardless of how long the hour labels are. */
+function renderCapacityBarCompact(actual, planned, capacity) {
+  const total = Math.round((actual + planned) * 10) / 10;
+  const overCapacity = Math.max(0, Math.round((total - capacity) * 10) / 10);
+  const plannedInCap = Math.round((planned - overCapacity) * 10) / 10;
+  const scale = Math.max(capacity, total, 0.1);
+  const pct = (h) => Math.max(0, (h / scale) * 100);
+  return `
+    <div class="worktoday-cell">
+      <div class="capacity-bar capacity-bar--compact">
+        ${actual > 0 ? `<div class="capacity-bar__seg capacity-bar__seg--actual" style="width:${pct(actual)}%"></div>` : ""}
+        ${plannedInCap > 0 ? `<div class="capacity-bar__seg capacity-bar__seg--planned" style="width:${pct(plannedInCap)}%"></div>` : ""}
+        ${overCapacity > 0 ? `<div class="capacity-bar__seg capacity-bar__seg--over" style="width:${pct(overCapacity)}%"></div>` : ""}
+      </div>
+      <div class="worktoday-cell__caption">Actual ${fmtHours(actual)} · Planned ${fmtHours(planned)}${overCapacity > 0 ? ` · <span style="color:var(--warning);font-weight:700">+${fmtHours(overCapacity)} over</span>` : ""}</div>
+    </div>
+  `;
+}
+
+function workItemMenuHtml(d, item) {
+  const locked = item.status === "In Execution" || item.status === "Executed" || item.status === "Rejected";
+  return `
+    <div class="dropdown-menu" data-menu-for="${item.id}">
+      <div class="dropdown-menu__label">Prototype controls</div>
+      <div class="dropdown-submenu">
+        <button type="button" class="dropdown-menu__item" data-submenu-trigger>◂ Simulate Status</button>
+        <div class="dropdown-submenu__panel">
+          ${["Assigned", "Accepted", "In Execution", "Executed", "Rejected"].map((s) => `
+            <button type="button" class="dropdown-menu__item" data-sim-status="${item.id}" data-status="${s}">${s}${item.status === s ? " ✓" : ""}</button>
+          `).join("")}
+        </div>
+      </div>
+      <div class="dropdown-menu__divider"></div>
+      <button type="button" class="dropdown-menu__item" data-reassign="${item.id}" ${locked ? "disabled" : ""} title="${locked ? "Assignment changes during or after execution require additional operational handling." : ""}">Reassign</button>
+      <button type="button" class="dropdown-menu__item" data-unassign="${item.id}" ${locked ? "disabled" : ""} title="${locked ? "Assignment changes during or after execution require additional operational handling." : ""}">Unassign</button>
+    </div>
+  `;
+}
+
+/* Compact Freight Order context for the assignment panel — one card per selected FRO,
+   plus the disconnected-sequence check (destination of one leg should match the source
+   of the next). This never auto-fixes ordering, just flags it for the dispatcher. */
+function renderSelectedFroSummary() {
+  const selectedFros = FROS.filter((f) => STATE.selectedFroIds.has(f.id))
+    .slice()
+    .sort((a, b) => a.appointmentTime.localeCompare(b.appointmentTime));
+  if (!selectedFros.length) return "";
+
+  let disconnected = false;
+  for (let i = 1; i < selectedFros.length; i++) {
+    if (selectedFros[i - 1].destination !== selectedFros[i].source) { disconnected = true; break; }
+  }
+
+  const cards = selectedFros.map((f) => `
+    <div class="work-item">
+      <div>
+        <span class="work-item__container">${f.containerNumber}</span>
+        <span class="work-item__route">${f.froNumber}</span>
+        <span class="work-item__meta">${f.load.join(" + ")} · ${LOCATIONS[f.source].name} → ${LOCATIONS[f.destination].name}</span>
+      </div>
+    </div>
+  `).join("");
+
+  return `
+    <div>
+      <p class="assigned-section__title">Work Sequence (${selectedFros.length} selected)</p>
+      ${cards}
+      ${disconnected ? `<div class="inline-note inline-note--warning" style="margin:8px 0 0">These moves do not form a clearly connected sequence.<br>Review the locations and order before assigning.</div>` : ""}
+    </div>
+  `;
+}
+
+function renderAssignmentPanel() {
+  const container = document.getElementById("assignment-panel-content");
+  const d = DRIVERS.find((x) => x.id === STATE.panel.driverId);
+  if (!d) { container.innerHTML = ""; return; }
+
+  const selectedCount = STATE.selectedFroIds.size;
+  const assignMode = STATE.panel.mode === "assign" && selectedCount > 0;
+  const visible = visibleWorkItems(d);
+  const projectedIncrement = assignMode ? Math.round(selectedCount * HOURS_PER_ORDER * 10) / 10 : 0;
+
+  if (STATE.panel.reassigning) {
+    container.innerHTML = renderReassignPicker(d);
+    wireReassignPicker(d);
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="panel-head">
+      <div>
+        <p class="panel-head__name">${d.name}</p>
+        <p class="panel-head__sub">${d.id} · ${d.truck}</p>
+      </div>
+      <button type="button" class="panel-close" id="panel-close-btn" aria-label="Close panel">✕</button>
+    </div>
+    <div class="assignment-panel__scroll">
+      <div class="mini-fields">
+        <div class="mini-field"><div class="mini-field__label">Driver Hours</div><div class="mini-field__value">${d.shiftWindow}</div></div>
+        <div class="mini-field"><div class="mini-field__label">Next Available</div><div class="mini-field__value">${d.nextAvailable}</div></div>
+        <div class="mini-field"><div class="mini-field__label">Next Location</div><div class="mini-field__value">${d.nextLocationName}</div></div>
+      </div>
+
+      <div class="work-today">
+        <p class="work-today__title">Work Today</p>
+        ${renderCapacityBar(d.actualHours, d.plannedHours, projectedIncrement, d.shiftHours)}
+      </div>
+
+      ${assignMode ? renderSelectedFroSummary() : ""}
+
+      <div>
+        <p class="assigned-section__title">Assigned Work (${visible.length} order${visible.length === 1 ? "" : "s"})</p>
+        ${visible.length ? visible.map((item) => renderWorkItem(d, item)).join("") : `<div class="empty-state" style="padding:16px">No assigned work for this planning day.</div>`}
+      </div>
+    </div>
+    ${assignMode ? `
+    <div class="panel-footer">
+      <span class="panel-footer__count">${selectedCount} FRO${selectedCount > 1 ? "s" : ""} selected</span>
+      <button type="button" class="btn-primary" id="confirm-assign-btn" ${selectedCount === 0 ? "disabled" : ""}>Assign</button>
+    </div>` : ""}
+  `;
+
+  document.getElementById("panel-close-btn").addEventListener("click", closeDriverPanel);
+  if (assignMode) document.getElementById("confirm-assign-btn").addEventListener("click", () => confirmAssign(d));
+
+  container.querySelectorAll(".menu-button").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const existing = btn.parentElement.querySelector(".dropdown-menu");
+      const wasOpen = !!existing;
+      closeAllPopovers();
+      if (!wasOpen) btn.insertAdjacentHTML("afterend", workItemMenuHtml(d, d.assignments.find((a) => a.id === btn.dataset.menuTrigger)));
+      wireWorkItemMenu(d);
+    });
+  });
+}
+
+const STATUS_PILL_CLASS = {
+  Assigned: "status-pill--neutral",
+  Accepted: "status-pill--positive",
+  "In Execution": "status-pill--info",
+  Executed: "status-pill--positive-subdued",
+  Rejected: "status-pill--negative",
+};
+function renderWorkItem(d, item) {
+  const statusClass = STATUS_PILL_CLASS[item.status] || "status-pill--neutral";
+  const executed = item.status === "Executed";
+  return `
+    <div class="work-item ${executed ? "work-item--executed" : ""}" style="position:relative" title="${item.load} · ${item.source} → ${item.destination}">
+      <div>
+        <span class="work-item__container">${item.container}</span>
+        <span class="work-item__meta">${item.time} · <span class="status-pill ${statusClass}">${item.status}</span></span>
+      </div>
+      <button type="button" class="menu-button" data-menu-trigger="${item.id}">⋯</button>
+    </div>
+  `;
+}
+
+function wireWorkItemMenu(d) {
+  document.querySelectorAll("[data-submenu-trigger]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const submenu = btn.closest(".dropdown-submenu");
+      const isOpen = submenu.classList.contains("dropdown-submenu--open");
+      document.querySelectorAll(".dropdown-submenu--open").forEach((el) => el.classList.remove("dropdown-submenu--open"));
+      if (!isOpen) submenu.classList.add("dropdown-submenu--open");
+    });
+  });
+  document.querySelectorAll("[data-sim-status]").forEach((btn) => {
+    btn.addEventListener("click", () => simulateStatus(d, btn.dataset.simStatus, btn.dataset.status));
+  });
+  document.querySelectorAll("[data-unassign]").forEach((btn) => {
+    if (btn.hasAttribute("disabled")) return;
+    btn.addEventListener("click", () => unassignItem(d, btn.dataset.unassign));
+  });
+  document.querySelectorAll("[data-reassign]").forEach((btn) => {
+    if (btn.hasAttribute("disabled")) return;
+    btn.addEventListener("click", () => { STATE.panel.reassigning = btn.dataset.reassign; closeAllPopovers(); renderAssignmentPanel(); });
+  });
+}
+
+/* ---------- Status simulation ---------- */
+function simulateStatus(d, itemId, newStatus) {
+  const item = d.assignments.find((a) => a.id === itemId);
+  if (!item) return;
+  const oldStatus = item.status;
+  item.status = newStatus;
+
+  if (newStatus === "In Execution") {
+    d.nextLocationName = item.destination;
+    d.nextAvailable = addMinutes(item.time, 180);
+    if (oldStatus !== "In Execution" && oldStatus !== "Executed") {
+      // Prototype-only: begin moving a portion of this FRO's mocked hours from
+      // Planned into Actual once execution starts. The real calculation (whether
+      // in-execution time counts immediately or only on completion) is still
+      // under business discussion — this is an adjustable approximation.
+      const moved = Math.round(HOURS_PER_ORDER * 0.3 * 10) / 10;
+      d.plannedHours = Math.max(0, Math.round((d.plannedHours - moved) * 10) / 10);
+      d.actualHours = Math.round((d.actualHours + moved) * 10) / 10;
+    }
+  } else if (newStatus === "Executed") {
+    d.nextLocationName = item.destination;
+    d.nextAvailable = addMinutes(item.time, 240);
+    const alreadyMoved = oldStatus === "In Execution" ? Math.round(HOURS_PER_ORDER * 0.3 * 10) / 10 : 0;
+    const remaining = Math.round((HOURS_PER_ORDER - alreadyMoved) * 10) / 10;
+    d.plannedHours = Math.max(0, Math.round((d.plannedHours - remaining) * 10) / 10);
+    d.actualHours = Math.round((d.actualHours + remaining) * 10) / 10;
+  } else if (newStatus === "Rejected" && oldStatus !== "Rejected") {
+    item.rejectedBy = d.name;
+    // Only remove this item's *remaining* (not-yet-executed) hours from Planned — any Actual
+    // hours already booked to this driver from earlier completed work are untouched.
+    if (oldStatus !== "Executed") {
+      const stillPlanned = oldStatus === "In Execution" ? Math.round((HOURS_PER_ORDER - HOURS_PER_ORDER * 0.3) * 10) / 10 : HOURS_PER_ORDER;
+      d.plannedHours = Math.max(0, Math.round((d.plannedHours - stillPlanned) * 10) / 10);
+    }
+    if (item.froId) {
+      const fro = FROS.find((f) => f.id === item.froId);
+      if (fro) {
+        fro.status = "unassigned";
+        fro.rejectedBy = d.name;
+        fro.rejectedByDriverId = d.id;
+        fro.rejectionReason = pick(item.id, REJECTION_REASONS);
+        fro.assignedDriverId = null;
+      }
+    }
+    // The item itself stays in d.assignments (visible in the panel as history, clearly
+    // marked Rejected) — it just no longer contributes to Planned hours.
+    toast(`${item.container} was rejected by ${d.name} and returned to the freight order pool.`);
+  }
+
+  closeAllPopovers();
+  renderFro();
+  renderDrivers();
+  renderAssignmentPanel();
+}
+
+/* ---------- Unassign ---------- */
+function unassignItem(d, itemId) {
+  const item = d.assignments.find((a) => a.id === itemId);
+  if (!item) return;
+  d.assignments = d.assignments.filter((a) => a.id !== itemId);
+  d.plannedHours = Math.max(0, Math.round((d.plannedHours - HOURS_PER_ORDER) * 10) / 10);
+  if (item.froId) {
+    const fro = FROS.find((f) => f.id === item.froId);
+    if (fro) { fro.status = "unassigned"; fro.assignedDriverId = null; }
+  }
+  closeAllPopovers();
+  toast(`${item.container} unassigned from ${d.name}.`);
+  renderFro();
+  renderDrivers();
+  renderAssignmentPanel();
+}
+
+/* ---------- Reassign ---------- */
+function renderReassignPicker(currentDriver) {
+  const itemId = STATE.panel.reassigning;
+  const item = currentDriver.assignments.find((a) => a.id === itemId);
+  const candidates = DRIVERS.filter((d) => d.id !== currentDriver.id);
+  return `
+    <div class="panel-head">
+      <div><p class="panel-head__name">Reassign ${item ? item.container : ""}</p><p class="panel-head__sub">Choose a new driver</p></div>
+      <button type="button" class="panel-close" id="panel-close-btn" aria-label="Close panel">✕</button>
+    </div>
+    <div class="assignment-panel__scroll">
+      <div class="reassign-picker">
+        ${candidates.map((c) => `
+          <div class="reassign-picker__option" data-pick-driver="${c.id}">
+            <div>
+              <div style="font-weight:700;font-size:13px">${c.name}</div>
+              <div class="reassign-picker__util">${c.nextLocationName} · currently ${fmtHours(c.plannedHours)} assigned</div>
+            </div>
+            <div class="reassign-picker__util">→ ${fmtHours(projectedPlannedHours(c, 1))} assigned</div>
+          </div>
+        `).join("")}
+      </div>
+      <div class="reassign-picker__option" data-pick-third-party="1" style="margin-top:10px">
+        <div style="font-weight:700;font-size:13px">Assign to Third Party</div>
+        <div class="reassign-picker__util">e.g. truck breakdown — hand off to a mocked vendor</div>
+      </div>
+      <div class="btn-row">
+        <button type="button" class="btn-secondary" id="cancel-reassign-btn">Cancel</button>
+      </div>
+    </div>
+  `;
+}
+function wireReassignPicker(currentDriver) {
+  document.getElementById("panel-close-btn").addEventListener("click", closeDriverPanel);
+  document.getElementById("cancel-reassign-btn").addEventListener("click", () => { STATE.panel.reassigning = null; renderAssignmentPanel(); });
+  document.querySelectorAll("[data-pick-driver]").forEach((row) => {
+    row.addEventListener("click", () => {
+      const newDriver = DRIVERS.find((d) => d.id === row.dataset.pickDriver);
+      const itemId = STATE.panel.reassigning;
+      const item = currentDriver.assignments.find((a) => a.id === itemId);
+      if (!item || !newDriver) return;
+      currentDriver.assignments = currentDriver.assignments.filter((a) => a.id !== itemId);
+      currentDriver.plannedHours = Math.max(0, Math.round((currentDriver.plannedHours - HOURS_PER_ORDER) * 10) / 10);
+      newDriver.assignments.push(item);
+      newDriver.plannedHours = projectedPlannedHours(newDriver, 1);
+      if (item.froId) {
+        const fro = FROS.find((f) => f.id === item.froId);
+        if (fro) fro.assignedDriverId = newDriver.id;
+      }
+      toast(`${item.container} reassigned to ${newDriver.name}.`);
+      STATE.panel.reassigning = null;
+      STATE.panel.driverId = newDriver.id;
+      STATE.panel.mode = "inspect";
+      renderFro();
+      renderDrivers();
+      renderAssignmentPanel();
+    });
+  });
+  const thirdPartyRow = document.querySelector("[data-pick-third-party]");
+  if (thirdPartyRow) {
+    thirdPartyRow.addEventListener("click", () => {
+      const itemId = STATE.panel.reassigning;
+      const item = currentDriver.assignments.find((a) => a.id === itemId);
+      if (!item) return;
+      currentDriver.assignments = currentDriver.assignments.filter((a) => a.id !== itemId);
+      currentDriver.plannedHours = Math.max(0, Math.round((currentDriver.plannedHours - HOURS_PER_ORDER) * 10) / 10);
+      if (item.froId) {
+        const fro = FROS.find((f) => f.id === item.froId);
+        if (fro) { fro.assignedDriverId = null; fro.thirdPartyVendor = THIRD_PARTY_VENDORS[0]; }
+      }
+      toast(`${item.container} handed off to ${THIRD_PARTY_VENDORS[0]} (third party).`);
+      STATE.panel.reassigning = null;
+      renderFro();
+      renderDrivers();
+      renderAssignmentPanel();
+    });
+  }
+}
+
+/* ---------- Confirm assign ---------- */
+function confirmAssign(d) {
+  const ids = Array.from(STATE.selectedFroIds);
+  if (!ids.length) return;
+  ids.forEach((id) => {
+    const fro = FROS.find((f) => f.id === id);
+    if (!fro || fro.onHold) return;
+    fro.status = "assigned";
+    fro.assignedDriverId = d.id;
+    fro.rejectedBy = null;
+    d.assignments.push({
+      id: uid("wk"),
+      froId: fro.id,
+      container: fro.containerNumber,
+      load: fro.load.join(" + "),
+      source: LOCATIONS[fro.source].name,
+      destination: LOCATIONS[fro.destination].name,
+      time: fro.appointmentTime,
+      status: "Assigned",
+      rejectedBy: null,
+    });
+  });
+  d.plannedHours = projectedPlannedHours(d, ids.length);
+  toast(`${ids.length} freight order${ids.length > 1 ? "s" : ""} assigned to ${d.name}.`);
+  STATE.selectedFroIds.clear();
+  STATE.driverFilterMode = "all";
+  syncDriverToggleUI();
+  STATE.panel.mode = "inspect";
+  renderFro();
+  renderDrivers();
+  renderAssignmentPanel();
+}
+
+/* ============================================================
+   FALLOUT / MORNING RECONCILIATION — prototype-only exception queue
+   ============================================================ */
+let falloutPanelOpen = false;
+let falloutSelected = new Set();
+
+function renderFalloutBanner() {
+  const host = document.getElementById("fallout-banner");
+  if (!STATE.fallout.length) {
+    host.innerHTML = "";
+    falloutPanelOpen = false;
+    return;
+  }
+  const previousDate = STATE.fallout[0].previousDate;
+  host.innerHTML = `
+    <div class="fallout-banner">
+      <span>${STATE.fallout.length} freight order${STATE.fallout.length > 1 ? "s" : ""} from ${previousDate} require reconciliation.</span>
+      <button type="button" class="btn-secondary" id="review-fallout-btn">${falloutPanelOpen ? "Hide" : "Review"}</button>
+    </div>
+    ${falloutPanelOpen ? renderFalloutPanel() : ""}
+  `;
+  document.getElementById("review-fallout-btn").addEventListener("click", () => {
+    falloutPanelOpen = !falloutPanelOpen;
+    if (falloutPanelOpen) falloutSelected = new Set();
+    renderFalloutBanner();
+  });
+  if (falloutPanelOpen) wireFalloutPanel();
+}
+
+function renderFalloutPanel() {
+  const eligibleCount = STATE.fallout.filter((f) => f.previousStatus !== "In Execution").length;
+  return `
+    <div class="fallout-panel">
+      <div class="fallout-panel__toolbar">
+        <p class="fallout-panel__title">Unresolved from ${STATE.fallout[0].previousDate} — In Execution items need individual review.</p>
+        <button type="button" class="btn-secondary" id="fallout-select-all" ${eligibleCount === 0 ? "disabled" : ""}>Select All Eligible</button>
+      </div>
+      ${STATE.fallout.map((f) => {
+        const inExecution = f.previousStatus === "In Execution";
+        return `
+        <div class="fallout-row">
+          <input type="checkbox" data-fallout-check="${f.id}" ${falloutSelected.has(f.id) ? "checked" : ""} ${inExecution ? "disabled" : ""} aria-label="Select ${f.container}" />
+          <div class="fallout-row__main">
+            <span class="fallout-row__container">${f.container}</span>
+            <span class="fallout-row__meta">Previously ${f.driverName} · ${f.previousDate}</span>
+            <span class="status-pill ${STATUS_PILL_CLASS[f.previousStatus] || "status-pill--neutral"}">${f.previousStatus}</span>
+          </div>
+          <div class="fallout-row__actions" style="position:relative">
+            <button type="button" class="menu-button" data-fallout-menu="${f.id}" aria-label="More actions">⋯</button>
+          </div>
+        </div>
+      `;
+      }).join("")}
+      <div class="fallout-panel__footer">
+        <span class="panel-footer__count">${falloutSelected.size} selected</span>
+        <button type="button" class="btn-primary" id="fallout-bulk-return" ${falloutSelected.size === 0 ? "disabled" : ""}>Return to Pool</button>
+      </div>
+    </div>
+  `;
+}
+
+function wireFalloutPanel() {
+  document.querySelectorAll("[data-fallout-check]").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      if (cb.checked) falloutSelected.add(cb.dataset.falloutCheck); else falloutSelected.delete(cb.dataset.falloutCheck);
+      renderFalloutBanner();
+    });
+  });
+  const selectAllBtn = document.getElementById("fallout-select-all");
+  if (selectAllBtn) selectAllBtn.addEventListener("click", () => {
+    falloutSelected = new Set(STATE.fallout.filter((f) => f.previousStatus !== "In Execution").map((f) => f.id));
+    renderFalloutBanner();
+  });
+  const bulkBtn = document.getElementById("fallout-bulk-return");
+  if (bulkBtn) bulkBtn.addEventListener("click", () => {
+    const ids = Array.from(falloutSelected);
+    ids.forEach((id) => returnFalloutToPool(id, { silent: true }));
+    falloutSelected = new Set();
+    toast(`${ids.length} freight order${ids.length > 1 ? "s" : ""} returned to the pool.`);
+    renderFalloutBanner();
+  });
+  document.querySelectorAll("[data-fallout-menu]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const wasOpen = !!btn.parentElement.querySelector(".dropdown-menu");
+      closeAllPopovers();
+      if (wasOpen) return;
+      const f = STATE.fallout.find((x) => x.id === btn.dataset.falloutMenu);
+      btn.insertAdjacentHTML("afterend", `
+        <div class="dropdown-menu">
+          <button type="button" class="dropdown-menu__item" data-return-fallout="${f.id}">Return to Pool</button>
+          <button type="button" class="dropdown-menu__item" data-keep-fallout="${f.id}">Keep Assignment</button>
+        </div>
+      `);
+      document.querySelector(`[data-return-fallout="${f.id}"]`).addEventListener("click", () => { closeAllPopovers(); returnFalloutToPool(f.id); });
+      document.querySelector(`[data-keep-fallout="${f.id}"]`).addEventListener("click", () => { closeAllPopovers(); keepFalloutAssignment(f.id); });
+    });
+  });
+}
+
+function returnFalloutToPool(id, opts) {
+  const entry = STATE.fallout.find((f) => f.id === id);
+  if (!entry) return;
+  if (entry.froId) {
+    const fro = FROS.find((f) => f.id === entry.froId);
+    if (fro) { fro.status = "unassigned"; fro.assignedDriverId = null; fro.fallout = false; }
+  }
+  STATE.fallout = STATE.fallout.filter((f) => f.id !== id);
+  if (!opts || !opts.silent) toast(`${entry.container} returned to the freight order pool for ${STATE.planningDate}.`);
+  renderFro();
+  renderFalloutBanner();
+}
+
+function keepFalloutAssignment(id) {
+  const entry = STATE.fallout.find((f) => f.id === id);
+  if (!entry) return;
+  const driver = DRIVERS.find((d) => d.id === entry.driverId);
+  if (driver) {
+    driver.assignments.push({
+      id: uid("wk"),
+      froId: entry.froId,
+      container: entry.container,
+      load: "",
+      source: "",
+      destination: "",
+      time: "",
+      status: entry.previousStatus,
+      rejectedBy: null,
+    });
+    driver.plannedHours = Math.round((driver.plannedHours + HOURS_PER_ORDER) * 10) / 10;
+    if (entry.froId) {
+      const fro = FROS.find((f) => f.id === entry.froId);
+      if (fro) fro.fallout = false;
+    }
+  }
+  STATE.fallout = STATE.fallout.filter((f) => f.id !== id);
+  toast(`${entry.container} kept on ${entry.driverName}'s plan (prototype hypothesis — not a confirmed rule).`);
+  renderDrivers();
+  if (STATE.panel.open && STATE.panel.driverId === entry.driverId) renderAssignmentPanel();
+  renderFalloutBanner();
+}
+
+/* ============================================================
+   PLANNING DATE — prototype-only daily refresh
+   ============================================================ */
+function resetArrayContents(arr, snapshot) {
+  arr.length = 0;
+  arr.push(...JSON.parse(JSON.stringify(snapshot)));
+}
+function refreshForPlanningDate(dateStr) {
+  closeAllPopovers();
+  const openDriverId = STATE.panel.open ? STATE.panel.driverId : null;
+  STATE.selectedFroIds.clear();
+  STATE.driverFilterMode = "all";
+  STATE.panel.mode = "inspect";
+
+  const previousDate = STATE.planningDate;
+  STATE.planningDate = dateStr;
+
+  if (dateStr === DEFAULT_PLANNING_DATE) {
+    resetArrayContents(FROS, INITIAL_FROS_SNAPSHOT);
+    resetArrayContents(DRIVERS, INITIAL_DRIVERS_SNAPSHOT);
+    STATE.fallout = [];
+  } else if (dateStr !== previousDate) {
+    // Prototype-only "next day" mock transition (engineer refinement scenario):
+    // today's Actual Today resets to 0, executed work drops off (it's done and no
+    // longer "planned"). Unfinished Assigned/Accepted/In Execution work does NOT
+    // silently carry over and does NOT silently vanish — it becomes a morning
+    // reconciliation "fallout" item the dispatcher must explicitly resolve
+    // (Return to Pool / Keep Assignment). This also naturally covers the
+    // cross-midnight "still In Execution" edge case with no special-case code.
+    // This is a hard-coded demo transform, not a production rollover engine.
+    DRIVERS.forEach((d) => {
+      d.actualHours = 0;
+      const carried = [];
+      d.assignments.forEach((a) => {
+        if (a.status === "Rejected") return;
+        if (a.status === "Executed") {
+          d.plannedHours = Math.max(0, Math.round((d.plannedHours - HOURS_PER_ORDER) * 10) / 10);
+          return;
+        }
+        // Unresolved (Assigned / Accepted / In Execution) — park it as fallout.
+        d.plannedHours = Math.max(0, Math.round((d.plannedHours - HOURS_PER_ORDER) * 10) / 10);
+        if (a.froId) {
+          const fro = FROS.find((f) => f.id === a.froId);
+          if (fro) fro.fallout = true;
+        }
+        STATE.fallout.push({
+          id: uid("fallout"),
+          froId: a.froId,
+          container: a.container,
+          driverId: d.id,
+          driverName: d.name,
+          previousStatus: a.status,
+          previousDate,
+        });
+      });
+      d.assignments = carried;
+    });
+  }
+
+  syncDriverToggleUI();
+  falloutPanelOpen = false;
+  renderFro();
+  renderDrivers();
+  renderFalloutBanner();
+
+  if (openDriverId && DRIVERS.some((d) => d.id === openDriverId)) {
+    STATE.panel.open = true;
+    STATE.panel.driverId = openDriverId;
+    renderAssignmentPanel();
+    renderDriversBody();
+  } else {
+    closeDriverPanel();
+  }
+}
+const TOMORROW_PLANNING_DATE = "2026-08-15";
+document.querySelectorAll("#day-toggle [data-day]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll("#day-toggle [data-day]").forEach((b) => b.classList.toggle("toggle-group__button--active", b === btn));
+    refreshForPlanningDate(btn.dataset.day === "tomorrow" ? TOMORROW_PLANNING_DATE : DEFAULT_PLANNING_DATE);
+  });
+});
+
+/* ============================================================
+   INIT
+   ============================================================ */
+renderFro();
+renderDrivers();
+renderFalloutBanner();
+</script>
