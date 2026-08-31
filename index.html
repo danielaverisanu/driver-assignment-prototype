@@ -934,7 +934,7 @@
       <div class="workspace__main">
         <section class="panel" id="fro-panel">
           <div class="panel__header">
-            <p class="panel__title" id="fro-title">Freight Orders for Assignment (6)</p>
+            <p class="panel__title" id="fro-title">Unassigned Freight Orders (6)</p>
             <div class="panel__tools">
               <div class="search-field">
                 <svg class="icon" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.125 10.5C8.54125 10.5 10.5 8.54125 10.5 6.125C10.5 3.70875 8.54125 1.75 6.125 1.75C3.70875 1.75 1.75 3.70875 1.75 6.125C1.75 8.54125 3.70875 10.5 6.125 10.5Z" stroke="var(--text-muted)" stroke-width="1.3125"/><path d="M9.625 9.625L12.25 12.25" stroke="var(--text-muted)" stroke-width="1.3125" stroke-linecap="round"/></svg>
@@ -973,7 +973,7 @@
               </div>
               <div class="search-field">
                 <svg class="icon" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6.125 10.5C8.54125 10.5 10.5 8.54125 10.5 6.125C10.5 3.70875 8.54125 1.75 6.125 1.75C3.70875 1.75 1.75 3.70875 1.75 6.125C1.75 8.54125 3.70875 10.5 6.125 10.5Z" stroke="var(--text-muted)" stroke-width="1.3125"/><path d="M9.625 9.625L12.25 12.25" stroke="var(--text-muted)" stroke-width="1.3125" stroke-linecap="round"/></svg>
-                <input type="text" id="drivers-search" placeholder="Search name, ID, TenStreet or truck" />
+                <input type="text" id="drivers-search" placeholder="Search name, ID, External Driver ID or truck" />
               </div>
               <button type="button" class="icon-button" id="drivers-filters-btn">
                 Filters
@@ -1063,7 +1063,7 @@ document.addEventListener("click", (e) => {
    REFERENCE DATA
    ============================================================ */
 const LOCATIONS = {
-  "CSX 59th Street": { code: "USCSX59", name: "CSX 59th Street" },
+  "Southside Intermodal Yard": { code: "USSSIY", name: "Southside Intermodal Yard" },
   "Chicago Terminal": { code: "USORDCT", name: "Chicago Terminal" },
   "Port of Chicago": { code: "USCHIPOC", name: "Port of Chicago" },
   "Joliet DC": { code: "USJOLDC", name: "Joliet DC" },
@@ -1073,18 +1073,18 @@ const LOCATIONS = {
   "Elgin, IL": { code: "USELGIL", name: "Elgin, IL" },
 };
 const SIZE_LABELS = { "40HC": "40' High cube", "20GP": "20' General purpose", "40GP": "40' General purpose", "45HC": "45' High cube" };
-const PORT_TERMINAL_OPTIONS = ["All Chicago locations", "Chicago Terminal", "CSX 59th Street", "Joliet DC", "Port of Chicago"];
+const PORT_TERMINAL_OPTIONS = ["All Chicago locations", "Chicago Terminal", "Southside Intermodal Yard", "Joliet DC", "Port of Chicago"];
 
 /* ============================================================
    MOCK DATA — FREIGHT ORDERS
    ============================================================ */
 const FROS = [
-  { id: "fro-6100420", froNumber: "FRO 6100420", bookingNumber: "ZBKNG23454512", containerNumber: "MSCU1234561", sizeType: "40HC", customer: "Adidas", customerId: "CUST-10045", load: ["FCL"], source: "CSX 59th Street", destination: "Joliet DC", appointmentTime: "11:00", appointmentEndTime: "13:00", appointmentDate: "14 Aug 2026", demurrage: { time: "17:00", date: "14 Aug 2026" }, detention: { time: "17:00", date: "16 Aug 2026" }, priority: "priority" },
-  { id: "fro-6100421", froNumber: "FRO 6100421", bookingNumber: "ZBKNG23454598", containerNumber: "TCKU8901232", sizeType: "20GP", customer: "Adidas", customerId: "CUST-10045", load: ["FCL"], source: "CSX 59th Street", destination: "Chicago Terminal", appointmentTime: "13:30", appointmentEndTime: "15:30", appointmentDate: "15 Aug 2026", demurrage: { time: "17:00", date: "15 Aug 2026" }, detention: { time: "17:00", date: "17 Aug 2026" }, priority: "normal" },
-  { id: "fro-6100422", froNumber: "FRO 6100422", bookingNumber: "ZBKNG23454633", containerNumber: "EVGU3456783", sizeType: "40GP", customer: "Maersk", customerId: "CUST-10012", load: ["FCL"], source: "Chicago Terminal", destination: "Port of Chicago", appointmentTime: "08:30", appointmentEndTime: "10:30", appointmentDate: "13 Aug 2026", demurrage: { time: "17:00", date: "13 Aug 2026" }, detention: null, priority: "priority" },
-  { id: "fro-6100423", froNumber: "FRO 6100423", bookingNumber: "ZBKNG23454701", containerNumber: "OOLU7890124", sizeType: "40HC", customer: "Nike", customerId: "CUST-10078", load: ["FCL"], source: "Port of Chicago", destination: "Gary, IN", appointmentTime: "10:00", appointmentEndTime: "12:00", appointmentDate: "16 Aug 2026", demurrage: { time: "17:00", date: "16 Aug 2026" }, detention: { time: "17:00", date: "18 Aug 2026" }, priority: "normal" },
-  { id: "fro-6100424", froNumber: "FRO 6100424", bookingNumber: "ZBKNG23454789", containerNumber: "HLCU2345675", sizeType: "45HC", customer: "H&M", customerId: "CUST-10091", load: ["FCL", "ECL"], source: "CSX 59th Street", destination: "Indianapolis, IN", appointmentTime: "14:00", appointmentEndTime: "16:00", appointmentDate: "14 Aug 2026", demurrage: { time: "17:00", date: "14 Aug 2026" }, detention: { time: "17:00", date: "16 Aug 2026" }, priority: "normal" },
-  { id: "fro-6100425", froNumber: "FRO 6100425", bookingNumber: "ZBKNG23454820", containerNumber: "ZIMU5678906", sizeType: "40HC", customer: "IKEA", customerId: "CUST-10033", load: ["ECL"], source: "Joliet DC", destination: "Chicago Terminal", appointmentTime: "15:30", appointmentEndTime: "17:30", appointmentDate: "15 Aug 2026", demurrage: { time: "17:00", date: "15 Aug 2026" }, detention: { time: "17:00", date: "17 Aug 2026" }, priority: "normal" },
+  { id: "fro-6100420", froNumber: "FRO 6100420", bookingNumber: "ZBKNG23454512", containerNumber: "MSCU1234561", sizeType: "40HC", customer: "Apex Apparel", customerId: "CUST-10045", load: ["FCL"], source: "Southside Intermodal Yard", destination: "Joliet DC", appointmentTime: "11:00", appointmentEndTime: "13:00", appointmentDate: "14 Aug 2026", demurrage: { time: "17:00", date: "14 Aug 2026" }, detention: { time: "17:00", date: "16 Aug 2026" }, priority: "priority" },
+  { id: "fro-6100421", froNumber: "FRO 6100421", bookingNumber: "ZBKNG23454598", containerNumber: "TCKU8901232", sizeType: "20GP", customer: "Apex Apparel", customerId: "CUST-10045", load: ["FCL"], source: "Southside Intermodal Yard", destination: "Chicago Terminal", appointmentTime: "13:30", appointmentEndTime: "15:30", appointmentDate: "15 Aug 2026", demurrage: { time: "17:00", date: "15 Aug 2026" }, detention: { time: "17:00", date: "17 Aug 2026" }, priority: "normal" },
+  { id: "fro-6100422", froNumber: "FRO 6100422", bookingNumber: "ZBKNG23454633", containerNumber: "EVGU3456783", sizeType: "40GP", customer: "Northstar Retail", customerId: "CUST-10012", load: ["FCL"], source: "Chicago Terminal", destination: "Port of Chicago", appointmentTime: "08:30", appointmentEndTime: "10:30", appointmentDate: "13 Aug 2026", demurrage: { time: "17:00", date: "13 Aug 2026" }, detention: null, priority: "priority" },
+  { id: "fro-6100423", froNumber: "FRO 6100423", bookingNumber: "ZBKNG23454701", containerNumber: "OOLU7890124", sizeType: "40HC", customer: "Horizon Foods", customerId: "CUST-10078", load: ["FCL"], source: "Port of Chicago", destination: "Gary, IN", appointmentTime: "10:00", appointmentEndTime: "12:00", appointmentDate: "16 Aug 2026", demurrage: { time: "17:00", date: "16 Aug 2026" }, detention: { time: "17:00", date: "18 Aug 2026" }, priority: "normal" },
+  { id: "fro-6100424", froNumber: "FRO 6100424", bookingNumber: "ZBKNG23454789", containerNumber: "HLCU2345675", sizeType: "45HC", customer: "Summit Home", customerId: "CUST-10091", load: ["FCL", "ECL"], source: "Southside Intermodal Yard", destination: "Indianapolis, IN", appointmentTime: "14:00", appointmentEndTime: "16:00", appointmentDate: "14 Aug 2026", demurrage: { time: "17:00", date: "14 Aug 2026" }, detention: { time: "17:00", date: "16 Aug 2026" }, priority: "normal" },
+  { id: "fro-6100425", froNumber: "FRO 6100425", bookingNumber: "ZBKNG23454820", containerNumber: "ZIMU5678906", sizeType: "40HC", customer: "BluePeak Imports", customerId: "CUST-10033", load: ["ECL"], source: "Joliet DC", destination: "Chicago Terminal", appointmentTime: "15:30", appointmentEndTime: "17:30", appointmentDate: "15 Aug 2026", demurrage: { time: "17:00", date: "15 Aug 2026" }, detention: { time: "17:00", date: "17 Aug 2026" }, priority: "normal" },
 ].map((f) => Object.assign(f, { status: "unassigned", assignedDriverId: null, rejectedBy: null, rejectionReason: null, onHold: false, holdReason: null }));
 
 // Prototype-only: pre-seed one rejected FRO so the "Rejected / by [driver]" state is visible on load.
@@ -1231,22 +1231,22 @@ const INITIAL_FRO_FULL_ORDER = DEFAULT_FRO_COLUMN_ORDER.concat(Object.keys(FRO_F
 const DRIVERS = [
   // plannedHours = remaining, not-yet-executed assigned work only (Assigned/Accepted/In Execution).
   // actualHours = mocked hours already executed today. The two are additive against shiftHours
-  // for the unified Work Today capacity bar — see item 19 of the refinement brief.
+  // for the unified Work Today capacity bar.
   // actualHours/plannedHours below are derived from each driver's SEED_ASSIGNMENTS using the
   // same bookkeeping simulateStatus uses: Executed = +HOURS_PER_ORDER actual; In Execution =
   // +30% actual / +70% planned; Assigned/Accepted = +HOURS_PER_ORDER planned. Keep them in sync
-  // if the seed assignments below change — see DRIVER_ASSIGNMENT_HANDOFF.md §5.
-  { id: "25005", name: "James Carter", truck: "TRK-4420", fuel: "Diesel", vendorName: "Maersk Fleet", vendorType: "Own company", shiftHours: 8, shiftWindow: "07:00–15:00", plannedHours: 2.2, actualHours: 3, nextAvailable: "11:20", nextLocationName: "CSX 59th Street" },
+  // if the seed assignments below change.
+  { id: "25005", name: "James Carter", truck: "TRK-4420", fuel: "Diesel", vendorName: "Northline Fleet", vendorType: "Own company", shiftHours: 8, shiftWindow: "07:00–15:00", plannedHours: 2.2, actualHours: 3, nextAvailable: "11:20", nextLocationName: "Southside Intermodal Yard" },
   { id: "25012", name: "Maria Lopez", truck: "TRK-3312", fuel: "Diesel", vendorName: "Owner Operator", vendorType: "Owner operator", shiftHours: 8, shiftWindow: "07:00–15:00", plannedHours: 1.3, actualHours: 1.3, nextAvailable: "09:45", nextLocationName: "Joliet DC" },
-  { id: "25031", name: "David Kim", truck: "TRK-5501", fuel: "EV", vendorName: "Maersk Fleet", vendorType: "Own company", shiftHours: 10, shiftWindow: "06:00–16:00", plannedHours: 3.5, actualHours: 4.3, nextAvailable: "14:30", nextLocationName: "Chicago Terminal" },
+  { id: "25031", name: "David Kim", truck: "TRK-5501", fuel: "EV", vendorName: "Northline Fleet", vendorType: "Own company", shiftHours: 10, shiftWindow: "06:00–16:00", plannedHours: 3.5, actualHours: 4.3, nextAvailable: "14:30", nextLocationName: "Chicago Terminal" },
   { id: "25044", name: "Sarah Johnson", truck: "TRK-2210", fuel: "Diesel", vendorName: "ABC Trucking", vendorType: "3rd-party carrier", shiftHours: 8, shiftWindow: "08:00–16:00", plannedHours: 2.6, actualHours: 0, nextAvailable: "08:30", nextLocationName: "Port of Chicago" },
-  { id: "25059", name: "Robert Chen", truck: "TRK-4417", fuel: "Diesel", vendorName: "Maersk Fleet", vendorType: "Own company", shiftHours: 9, shiftWindow: "07:00–16:00", plannedHours: 2.6, actualHours: 2.6, nextAvailable: "12:15", nextLocationName: "Elgin, IL" },
-  { id: "25067", name: "Angela Torres", truck: "TRK-1108", fuel: "EV", vendorName: "Owner Operator", vendorType: "Owner operator", shiftHours: 8, shiftWindow: "15:00–23:00", plannedHours: 0, actualHours: 0, nextAvailable: "Now", nextLocationName: "CSX 59th Street" },
+  { id: "25059", name: "Robert Chen", truck: "TRK-4417", fuel: "Diesel", vendorName: "Northline Fleet", vendorType: "Own company", shiftHours: 9, shiftWindow: "07:00–16:00", plannedHours: 2.6, actualHours: 2.6, nextAvailable: "12:15", nextLocationName: "Elgin, IL" },
+  { id: "25067", name: "Angela Torres", truck: "TRK-1108", fuel: "EV", vendorName: "Owner Operator", vendorType: "Owner operator", shiftHours: 8, shiftWindow: "15:00–23:00", plannedHours: 0, actualHours: 0, nextAvailable: "Now", nextLocationName: "Southside Intermodal Yard" },
   { id: "25078", name: "Mark Williams", truck: "TRK-3390", fuel: "Diesel", vendorName: "ABC Trucking", vendorType: "3rd-party carrier", shiftHours: 8, shiftWindow: "09:00–17:00", plannedHours: 2.2, actualHours: 3, nextAvailable: "10:40", nextLocationName: "Hammond, IN" },
-  { id: "25082", name: "Lisa Park", truck: "TRK-6612", fuel: "Diesel", vendorName: "Maersk Fleet", vendorType: "Own company", shiftHours: 8, shiftWindow: "06:00–14:00", plannedHours: 0, actualHours: 1.3, nextAvailable: "Now", nextLocationName: "Joliet DC" },
+  { id: "25082", name: "Lisa Park", truck: "TRK-6612", fuel: "Diesel", vendorName: "Northline Fleet", vendorType: "Own company", shiftHours: 8, shiftWindow: "06:00–14:00", plannedHours: 0, actualHours: 1.3, nextAvailable: "Now", nextLocationName: "Joliet DC" },
   { id: "25091", name: "Tom Bradley", truck: "TRK-7740", fuel: "EV", vendorName: "Owner Operator", vendorType: "Owner operator", shiftHours: 10, shiftWindow: "12:00–22:00", plannedHours: 3.5, actualHours: 6.9, nextAvailable: "15:45", nextLocationName: "Chicago Terminal" },
 ].map((d) => Object.assign(d, {
-  tenstreetId: "TS-" + (120000 + (hashStr(d.id) % 9000)),
+  externalDriverId: "EXT-" + (120000 + (hashStr(d.id) % 9000)),
   lastKnownLocation: d.nextLocationName,
   lastKnownEvent: pick(d.id, ["Gate out", "POD submitted", "Arrived at yard", "Departed terminal"]),
   assignments: [],
@@ -1256,15 +1256,15 @@ const SEED_ASSIGNMENTS = {
   // James Carter — mid-shift: two completed moves already explain his Actual hours,
   // one In Execution + one Accepted make up the rest of his Planned hours.
   "25005": [
-    { container: "MSCU0009910", load: "FCL", source: "CSX 59th Street", destination: "Joliet DC", time: "06:30", status: "Executed" },
-    { container: "TCLU2001122", load: "FCL", source: "CSX 59th Street", destination: "Elgin, IL", time: "07:00", status: "Executed" },
-    { container: "MSCU0001110", load: "FCL", source: "CSX 59th Street", destination: "Joliet DC", time: "08:30", status: "In Execution" },
-    { container: "TCLU2093311", load: "FCL", source: "CSX 59th Street", destination: "Chicago Terminal", time: "13:00", status: "Accepted" },
+    { container: "MSCU0009910", load: "FCL", source: "Southside Intermodal Yard", destination: "Joliet DC", time: "06:30", status: "Executed" },
+    { container: "TCLU2001122", load: "FCL", source: "Southside Intermodal Yard", destination: "Elgin, IL", time: "07:00", status: "Executed" },
+    { container: "MSCU0001110", load: "FCL", source: "Southside Intermodal Yard", destination: "Joliet DC", time: "08:30", status: "In Execution" },
+    { container: "TCLU2093311", load: "FCL", source: "Southside Intermodal Yard", destination: "Chicago Terminal", time: "13:00", status: "Accepted" },
   ],
   // Maria Lopez — Scenario A: one completed move this morning explains her Actual hours,
   // one Assigned move later today explains her Planned hours.
   "25012": [
-    { container: "MSKU7710023", load: "FCL", source: "Joliet DC", destination: "CSX 59th Street", time: "06:00", status: "Executed" },
+    { container: "MSKU7710023", load: "FCL", source: "Joliet DC", destination: "Southside Intermodal Yard", time: "06:00", status: "Executed" },
     { container: "MSKU8827121", load: "FCL", source: "Joliet DC", destination: "Gary, IN", time: "09:00", status: "Assigned" },
   ],
   // David Kim — Scenario B: three completed moves plus a partially-executed In Execution
@@ -1291,25 +1291,25 @@ const SEED_ASSIGNMENTS = {
   // Angela Torres — Scenario D: genuinely unused/available driver, no work at all today.
   "25067": [],
   "25078": [
-    { container: "EVGU1000666", load: "FCL", source: "Hammond, IN", destination: "CSX 59th Street", time: "05:00", status: "Executed" },
+    { container: "EVGU1000666", load: "FCL", source: "Hammond, IN", destination: "Southside Intermodal Yard", time: "05:00", status: "Executed" },
     { container: "TCKU2000777", load: "FCL", source: "Hammond, IN", destination: "Joliet DC", time: "05:45", status: "Executed" },
-    { container: "EVGU2245108", load: "FCL", source: "Hammond, IN", destination: "CSX 59th Street", time: "09:30", status: "In Execution" },
+    { container: "EVGU2245108", load: "FCL", source: "Hammond, IN", destination: "Southside Intermodal Yard", time: "09:30", status: "In Execution" },
     { container: "TCKU9982341", load: "FCL", source: "Hammond, IN", destination: "Joliet DC", time: "14:15", status: "Assigned" },
   ],
   // Lisa Park — Scenario E: completed her one move for the day, nothing remaining.
   "25082": [
-    { container: "MSKU5000888", load: "FCL", source: "Joliet DC", destination: "CSX 59th Street", time: "06:00", status: "Executed" },
+    { container: "MSKU5000888", load: "FCL", source: "Joliet DC", destination: "Southside Intermodal Yard", time: "06:00", status: "Executed" },
   ],
   // Tom Bradley — over-capacity example: five completed moves plus an In Execution item
   // already explain his high Actual hours, and Accepted/Assigned work pushes his total
   // past his 10h shift capacity.
   "25091": [
-    { container: "MSKU1000001", load: "FCL", source: "Chicago Terminal", destination: "CSX 59th Street", time: "04:00", status: "Executed" },
+    { container: "MSKU1000001", load: "FCL", source: "Chicago Terminal", destination: "Southside Intermodal Yard", time: "04:00", status: "Executed" },
     { container: "MSKU1000002", load: "FCL", source: "Chicago Terminal", destination: "Elgin, IL", time: "04:30", status: "Executed" },
     { container: "MSKU1000003", load: "FCL", source: "Chicago Terminal", destination: "Gary, IN", time: "05:00", status: "Executed" },
     { container: "MSKU1000004", load: "FCL", source: "Chicago Terminal", destination: "Joliet DC", time: "05:30", status: "Executed" },
     { container: "MSKU1000005", load: "FCL", source: "Chicago Terminal", destination: "Port of Chicago", time: "06:00", status: "Executed" },
-    { container: "MSKU3320981", load: "FCL", source: "Chicago Terminal", destination: "CSX 59th Street", time: "10:00", status: "In Execution" },
+    { container: "MSKU3320981", load: "FCL", source: "Chicago Terminal", destination: "Southside Intermodal Yard", time: "10:00", status: "In Execution" },
     { container: "HLCU7743210", load: "FCL", source: "Chicago Terminal", destination: "Indianapolis, IN", time: "13:45", status: "Accepted" },
     { container: "HLCU8000999", load: "FCL", source: "Chicago Terminal", destination: "Hammond, IN", time: "15:30", status: "Assigned" },
   ],
@@ -1326,7 +1326,7 @@ function fmtHours(h) { return (Math.round(h * 10) / 10) + "h"; }
 
 /* Unified field registry for the Drivers table — same pattern as FRO_FIELD_DEFS. */
 const DRIVER_FIELD_DEFS = {
-  driver: { label: "Driver", group: "default", render: (d) => twoLine(d.name, d.id + " · " + d.tenstreetId), sortValue: (d) => d.name },
+  driver: { label: "Driver", group: "default", render: (d) => twoLine(d.name, d.id + " · " + d.externalDriverId), sortValue: (d) => d.name },
   truck: { label: "Truck", group: "default", render: (d) => twoLine(d.truck, d.fuel, {}), sortValue: (d) => d.truck },
   workToday: { label: "Work Today", group: "default", render: (d) => renderCapacityBarCompact(d.actualHours, d.plannedHours, d.shiftHours), sortValue: (d) => d.actualHours + d.plannedHours },
   assignedWork: { label: "Assigned Work", group: "default", align: "right", render: (d) => activeAssignments(d).length + " orders", sortValue: (d) => activeAssignments(d).length },
@@ -1335,7 +1335,7 @@ const DRIVER_FIELD_DEFS = {
   nextLocation: { label: "Next Location", group: "default", render: (d) => d.nextLocationName, sortValue: (d) => d.nextLocationName },
 
   driverId: { label: "Driver ID", group: "optional", render: (d) => d.id, sortValue: (d) => d.id },
-  tenstreetId: { label: "TenStreet ID", group: "optional", render: (d) => d.tenstreetId, sortValue: (d) => d.tenstreetId },
+  externalDriverId: { label: "External Driver ID", group: "optional", render: (d) => d.externalDriverId, sortValue: (d) => d.externalDriverId },
   fuel: { label: "Truck Fuel Type", group: "optional", render: (d) => d.fuel, sortValue: (d) => d.fuel },
   vendorGroup: { label: "Parent Vendor", group: "optional", render: (d) => twoLine(d.vendorName, d.vendorType), sortValue: (d) => d.vendorName },
   vendorName: { label: "Parent Vendor Name", group: "optional", render: (d) => d.vendorName, sortValue: (d) => d.vendorName },
@@ -1402,7 +1402,7 @@ document.querySelectorAll(".app-header__tab").forEach((btn) => {
 /* ============================================================
    PORT / TERMINAL
    ============================================================ */
-const SCOPE_CUSTOMERS = ["Maersk", "Adidas", "Nike", "IKEA", "H&M"];
+const SCOPE_CUSTOMERS = ["Northstar Retail", "Apex Apparel", "Horizon Foods", "Summit Home", "BluePeak Imports"];
 const SCOPE_MOVE_TYPES = ["Live Load", "Live Unload", "Drop & Hook"];
 
 function updateScopeFiltersButton() {
@@ -1661,7 +1661,7 @@ function releaseHold(id) {
   renderFro();
 }
 
-const THIRD_PARTY_VENDORS = ["ABC Trucking", "XPO Logistics", "Werner Enterprises"];
+const THIRD_PARTY_VENDORS = ["ABC Trucking", "Ridgeline Carriers", "Trailwind Logistics"];
 
 function renderThirdPartySlot() {
   const slot = document.getElementById("fro-third-party-slot");
@@ -1703,7 +1703,7 @@ function assignSelectedToThirdParty(vendorName) {
 
 function renderFro() {
   const pool = FROS.filter((f) => f.status !== "assigned");
-  document.getElementById("fro-title").textContent = `Freight Orders for Assignment (${pool.length})`;
+  document.getElementById("fro-title").textContent = `Unassigned Freight Orders (${pool.length})`;
   renderFroHead();
   renderFroBody();
   updateFroFiltersBadge();
@@ -1880,7 +1880,7 @@ function computeRecommendedIds() {
 function driverMatchesSearch(d, q) {
   if (!q) return true;
   q = q.toLowerCase();
-  return d.name.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.tenstreetId.toLowerCase().includes(q) || d.truck.toLowerCase().includes(q);
+  return d.name.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.externalDriverId.toLowerCase().includes(q) || d.truck.toLowerCase().includes(q);
 }
 function driverMatchesFilters(d) {
   const flt = STATE.driverFilters;
@@ -2266,9 +2266,8 @@ function simulateStatus(d, itemId, newStatus) {
     d.nextAvailable = addMinutes(item.time, 180);
     if (oldStatus !== "In Execution" && oldStatus !== "Executed") {
       // Prototype-only: begin moving a portion of this FRO's mocked hours from
-      // Planned into Actual once execution starts. The real calculation (whether
-      // in-execution time counts immediately or only on completion) is still
-      // under business discussion — this is an adjustable approximation.
+      // Planned into Actual once execution starts. This is an adjustable
+      // approximation, not a finalized calculation.
       const moved = Math.round(HOURS_PER_ORDER * 0.3 * 10) / 10;
       d.plannedHours = Math.max(0, Math.round((d.plannedHours - moved) * 10) / 10);
       d.actualHours = Math.round((d.actualHours + moved) * 10) / 10;

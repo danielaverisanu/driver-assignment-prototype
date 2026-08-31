@@ -1,14 +1,20 @@
 # Driver Assignment Prototype
 
-A self-contained, single-file HTML/CSS/JS prototype of the Driver Assignment workspace
-inside a "Dispatcher Dashboard" shell (freight-order-first assignment flow, driver side
-panel, Work Today capacity visualization, status simulation, fallout/reconciliation, etc.).
+This is an interactive UX prototype demonstrating **Driver Assignment** within a
+"Dispatcher Dashboard" shell — a freight-order-first workflow for assigning drivers to
+freight orders, reviewing driver capacity, and simulating assignment status changes.
 
-**Entry point:** [`index.html`](index.html) — no build step, no framework, no external
-dependencies. All markup, styling, mock data, and interaction logic live in this one file.
-Open it directly in a browser, or view it via the live GitHub Pages URL below.
+> **Disclaimer:** This is an interactive UX prototype. All customer, driver, shipment,
+> facility, identifier, and operational data shown in the prototype is fictional and used
+> for demonstration purposes only. Geographic references may use real cities/states for
+> realism. This is not a production system.
 
-**Live prototype:** _(filled in once GitHub Pages is enabled — see repository Settings → Pages)_
+**Entry point:** [`index.html`](index.html) — a self-contained, single-file HTML/CSS/JS
+page. No build step, no framework, no external dependencies. All markup, styling, mock
+data, and interaction logic live in this one file. Open it directly in a browser, or view
+it via the live prototype URL below.
+
+**Live prototype:** https://danielaverisanu.github.io/driver-assignment-prototype/
 
 ## Updating the live prototype
 
